@@ -217,4 +217,8 @@ func (s *R) Snap() {
 }
 
 // Back pops back to the last Snapped.
-func (s *R) Back() { s.Jump(s.Snapped.Pop()) }
+func (s *R) Back() {
+	if last := s.Snapped.Pop(); last != nil {
+		s.Jump(last)
+	}
+}

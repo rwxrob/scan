@@ -133,6 +133,7 @@ func ExampleR_Snap_nested() {
 	s.Print()  // g
 	s.Back()   // back to first snap
 	s.Print()  // t
+	s.Back()   // (does nothing)
 	// Output:
 	// U+0074 't' 1,5-5 (5-5)
 	// U+0067 'g' 1,9-9 (9-9)
