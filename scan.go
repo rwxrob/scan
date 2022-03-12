@@ -36,11 +36,19 @@ const (
 	Done = 1 << (iota + 1)
 )
 
+// Node is a simple type that is encapsulated into a tree.Node with the
+// same type (T) value. Node is used instead of a string to indicate the
+// beginning and ending position of all the buffer string data.
+type Node struct {
+	T   int
+	Beg *Cur
+	End *Cur
+}
+
 // R (as in scan.R or "scanner") implements a non-linear, rune-centric,
-// buffered data scanner and provides full support for BPEGN. See New
-// for creating a usable struct that implements scan.R. The buffer and
-// cursor are directly exposed to facilitate higher-performance, direct
-// access when needed.
+// buffered data scanner. See New for creating a usable struct that
+// implements scan.R. The buffer and cursor are directly exposed to
+// facilitate higher-performance, direct access when needed.
 type R struct {
 
 	// Buf is the data buffer providing infinite look-ahead and behind.
@@ -54,7 +62,7 @@ type R struct {
 	Last *Cur
 
 	// Snapped contains the latest Cur when Snap was called.
-	Snapped *Cur
+	Snapped *qstack.QStack[*Cur]
 
 	// State allows parser creators to add additional bitwise states as
 	// needed. EOD is currently the only state supported.
@@ -64,12 +72,12 @@ type R struct {
 	// when scan.R.Beg is called when the Parsing stack is empty. Most
 	// will only use Trees[0] but it is possible that a scan.R would parse
 	// multiple top-level tree data structures.
-	Trees []*tree.Tree[string]
+	Trees []*tree.Tree[*Node]
 
 	// Parsing contains the Nodes that are currently open and being
 	// parsed. A new Node is pushed onto the Parsing stack by calling
 	// scan.R.Beg and scan.R.End later.
-	Parsing *qstack.QStack[string]
+	Parsing *qstack.QStack[*tree.Node[*Node]]
 }
 
 // New creates a new scan.R instance and initializes it.
@@ -109,7 +117,8 @@ func (s *R) Init(i any) error {
 	s.Cur.Len = ln
 	s.Cur.Next = ln
 
-	s.Parsing = qstack.New[string]()
+	s.Snapped = qstack.New[*Cur]()
+	s.Parsing = qstack.New[*tree.Node[*Node]]()
 
 	return nil
 }
@@ -194,3 +203,18 @@ func (s *R) Mark() *Cur {
 	cp := *s.Cur // force a copy
 	return &cp
 }
+
+// Jump replaces the internal cursor with a copy of the one passed
+// effectively repositioning the scanner's current position in the
+// buffered data.
+func (s *R) Jump(c *Cur) { nc := *c; s.Cur = &nc }
+
+// Snap pushes a bookmark (as if taken with Mark) onto the Snapped
+// stack. Use Back to pop back to the last Snapped.
+func (s *R) Snap() {
+	cp := *s.Cur // force a copy
+	s.Snapped.Push(&cp)
+}
+
+// Back pops back to the last Snapped.
+func (s *R) Back() { s.Jump(s.Snapped.Pop()) }
