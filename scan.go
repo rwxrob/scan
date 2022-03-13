@@ -61,24 +61,26 @@ type R struct {
 	// their bitwise iotas at 1000.
 	State int
 
-	// Errors contains errors encountered while scanning expressions.
-	Errors *qstack.QStack[*Error]
+	// Err contains errors encountered while scanning expressions.
+	Err *qstack.QStack[*Error]
 }
 
-// New creates a new scan.R instance and initializes it.
-func New(i any) (*R, error) {
+// New creates a new scan.R instance and initializes it pushing an error
+// to Err if any are encountered.
+func New(i any) *R {
 	s := new(R)
-	if err := s.Init(i); err != nil {
-		return nil, err
-	}
-	return s, nil
+	s.Init(i)
+	return s
 }
 
 // Init reads all of passed parsable data (io.Reader, string, []byte)
 // into buffered memory, scans the first rune, and sets the internals of
-// scanner appropriately returning an error if anything happens while
-// attempting to read and buffer the data (OOM, etc.).
-func (s *R) Init(i any) error {
+// scanner appropriately pushing an error to Err if anything happens
+// while attempting to read and buffer the data (OOM, etc.).
+func (s *R) Init(i any) {
+
+	s.Snapped = qstack.New[*Cur]()
+	s.Err = qstack.New[*Error]()
 
 	s.Cur = new(Cur)
 	s.Cur.Pos = Pos{}
@@ -87,38 +89,43 @@ func (s *R) Init(i any) error {
 	s.Cur.Pos.LineByte = 1
 	s.Cur.Pos.Rune = 1
 
-	if err := s.buffer(i); err != nil {
-		return err
+	s.buffer(i)
+	if s.Err.Len > 0 {
+		return
 	}
 
 	r, ln := utf8.DecodeRune(s.Buf)
 	if ln == 0 {
 		r = tk.EOD
 		s.State |= EOD
-		return fmt.Errorf("failed to scan first rune")
+		s.Errorf("failed to scan first rune")
+		return
 	}
 
 	s.Cur.Rune = r
 	s.Cur.Len = ln
 	s.Cur.Next = ln
 
-	s.Snapped = qstack.New[*Cur]()
-	s.Errors = qstack.New[*Error]()
-
-	return nil
 }
 
-// Error pushes a new error on Errors stack. The last error is always
-// displayed with the scan.R is marshaled/printed as a string.
+// Error pushes the message from the passed error onto the Err stack.
+func (s *R) Error(err error) {
+	s.State |= ERR
+	s.Err.Push(&Error{fmt.Sprintf(`%v`, err), s.Mark()})
+}
+
+// Errorf pushes a new formatted error on Err stack. The last error
+// is always displayed with the scan.R is marshaled/printed as a string.
 func (s *R) Errorf(tpl string, i ...any) {
 	msg := fmt.Sprintf(tpl, i...)
-	s.Errors.Push(&Error{msg, s.Mark()})
+	s.State |= ERR
+	s.Err.Push(&Error{msg, s.Mark()})
 }
 
 // String prints the last error and position.
 func (s *R) String() string {
-	if s.Errors.Len > 0 {
-		return s.Errors.Pop().String()
+	if s.Err.Len > 0 {
+		return s.Err.Pop().String()
 	}
 	return s.Cur.String()
 }
@@ -129,26 +136,28 @@ func (s *R) Print() { fmt.Println(s.String()) }
 // Log delegates to internal cursor Log.
 func (s *R) Log() { log.Print(s.String()) }
 
-func (s *R) buffer(i any) error {
-	var err error
+func (s *R) buffer(i any) {
 	switch v := i.(type) {
 	case io.Reader:
+		var err error
 		s.Buf, err = io.ReadAll(v)
 		if err != nil {
-			return err
+			s.Error(err)
+			return
 		}
 	case string:
 		s.Buf = []byte(v)
 	case []byte:
 		s.Buf = v
 	default:
-		return fmt.Errorf("cannot buffer type: %T", i)
+		s.Errorf("cannot buffer type: %T", i)
+		return
 	}
 	s.BufLen = len(s.Buf)
 	if s.BufLen == 0 {
-		return fmt.Errorf("scanner: no input")
+		s.Errorf("scanner: no input")
+		return
 	}
-	return err
 }
 
 // Scan decodes the next rune and advances the cursor by one.  If the

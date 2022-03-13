@@ -9,6 +9,27 @@ import (
 	"github.com/rwxrob/scan"
 )
 
+func ExampleNew_string() {
+	s := scan.New("something here")
+	s.Print()
+	// Output:
+	// U+0073 's' 1,1-1 (1-1)
+}
+
+func ExampleNew_runes() {
+	s := scan.New([]byte{'f', 'o', 'o'})
+	s.Print()
+	// Output:
+	// U+0066 'f' 1,1-1 (1-1)
+}
+
+func ExampleNew_reader() {
+	s := scan.New(strings.NewReader("something here"))
+	s.Print()
+	// Output:
+	// U+0073 's' 1,1-1 (1-1)
+}
+
 func ExampleR_Init_string() {
 	s := new(scan.R)
 	s.Init("something here")
@@ -35,10 +56,10 @@ func ExampleR_Init_reader() {
 
 func ExampleR_Init_error() {
 	s := new(scan.R)
-	err := s.Init([]rune{'f', 'o', 'o'})
-	fmt.Println(err)
+	s.Init([]rune{'f', 'o', 'o'})
+	s.Print()
 	// Output:
-	// cannot buffer type: []int32
+	// cannot buffer type: []int32 at U+0000 '\x00' 1,1-1 (1-1)
 }
 
 func ExampleR_marshaling() {
@@ -49,7 +70,7 @@ func ExampleR_marshaling() {
 	defer log.SetOutput(os.Stderr)
 	defer log.SetFlags(log.Flags())
 
-	s, _ := scan.New("something here")
+	s := scan.New("something here")
 	s.Print()
 	s.Log()
 	fmt.Println(s)
@@ -63,7 +84,7 @@ func ExampleR_marshaling() {
 }
 
 func ExampleR_Scan() {
-	s, _ := scan.New("so")
+	s := scan.New("so")
 	fmt.Println(s.State == s.State|scan.EOD)
 	s.Print()
 	s.Scan()
@@ -80,7 +101,7 @@ func ExampleR_Scan() {
 }
 
 func ExampleR_Mark() {
-	s, _ := scan.New("so")
+	s := scan.New("so")
 	s.Print()
 	m := s.Mark()
 	m.Print()
@@ -95,7 +116,7 @@ func ExampleR_Mark() {
 }
 
 func ExampleR_Snap_one() {
-	s, _ := scan.New("something here")
+	s := scan.New("something here")
 	s.Any(4)
 	s.Print()
 	s.Snap()
@@ -110,7 +131,7 @@ func ExampleR_Snap_one() {
 }
 
 func ExampleR_Snap_nested() {
-	s, _ := scan.New("something here")
+	s := scan.New("something here")
 	s.Any(4)
 	s.Print() // t
 	s.Snap()  // first time
@@ -136,7 +157,7 @@ func ExampleR_Snap_nested() {
 }
 
 func ExamplePeek() {
-	s, _ := scan.New("some thing")
+	s := scan.New("some thing")
 	s.Any(6)
 	fmt.Println(s.Peek(3))
 	// Output:
@@ -144,7 +165,7 @@ func ExamplePeek() {
 }
 
 func ExampleR_PeekTo() {
-	s, _ := scan.New("some thing")
+	s := scan.New("some thing")
 	s.Scan()
 	m1 := s.Mark()
 	m1.Print()
@@ -163,7 +184,7 @@ func ExampleR_PeekTo() {
 }
 
 func ExampleR_PeekSlice() {
-	s, _ := scan.New("some thing")
+	s := scan.New("some thing")
 	s.Scan()
 	m1 := s.Mark()
 	m1.Print()
