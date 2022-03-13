@@ -3,12 +3,8 @@
 
 /*
 Package scan implements a non-linear, rune-centric, buffered data,
-extendable scanner with built-in optional node-tree parser. The methods
-of the scanner can be quickly written by-hand or generated automatically
-from tools supporting PEGN, PEG, ABNF, EBNF, regular expressions, and
-other meta languages. PEGN has been the primary language for one-to-one
-compatibility. Equivalent methods for all PEGN classes, tokens, and
-checks are included.
+scanner with user-friendly cursors. The methods of the scanner can be
+quickly written by-hand or generated automatically.
 */
 package scan
 
@@ -18,7 +14,6 @@ import (
 	"unicode/utf8"
 
 	"github.com/rwxrob/structs/qstack"
-	"github.com/rwxrob/structs/tree"
 )
 
 const (
@@ -36,19 +31,12 @@ const (
 	Done = 1 << (iota + 1)
 )
 
-// Node is a simple type that is encapsulated into a tree.Node with the
-// same type (T) value. Node is used instead of a string to indicate the
-// beginning and ending position of all the buffer string data.
-type Node struct {
-	T   int
-	Beg *Cur
-	End *Cur
-}
-
-// R (as in scan.R or "scanner") implements a non-linear, rune-centric,
-// buffered data scanner. See New for creating a usable struct that
-// implements scan.R. The buffer and cursor are directly exposed to
-// facilitate higher-performance, direct access when needed.
+// R (as in scan.R or "scanner") implements a buffered data, non-linear,
+// rune-centric, scanner with cursor and bookmarks for dealing with
+// infinite look-ahead/behind designs such as PEG/PEGN. See New for
+// creating a usable struct that implements scan.R. The buffer and
+// cursor are directly exposed to facilitate higher-performance, direct
+// access when needed.
 type R struct {
 
 	// Buf is the data buffer providing infinite look-ahead and behind.
@@ -58,26 +46,14 @@ type R struct {
 	// Cur is the active current cursor pointing to the Buf data.
 	Cur *Cur
 
-	// Last contains the previous Cur value when Scan was called.
-	Last *Cur
-
 	// Snapped contains the latest Cur when Snap was called.
 	Snapped *qstack.QStack[*Cur]
 
 	// State allows parser creators to add additional bitwise states as
-	// needed. EOD is currently the only state supported.
+	// needed. States from 1-999 are reserved but only Done (1) is
+	// currently defined. Developers should start their bitwise iotas at
+	// 1000.
 	State int
-
-	// Trees contains a collection of tree data structures captured only
-	// when scan.R.Beg is called when the Parsing stack is empty. Most
-	// will only use Trees[0] but it is possible that a scan.R would parse
-	// multiple top-level tree data structures.
-	Trees []*tree.Tree[*Node]
-
-	// Parsing contains the Nodes that are currently open and being
-	// parsed. A new Node is pushed onto the Parsing stack by calling
-	// scan.R.Beg and scan.R.End later.
-	Parsing *qstack.QStack[*tree.Node[*Node]]
 }
 
 // New creates a new scan.R instance and initializes it.
@@ -118,7 +94,6 @@ func (s *R) Init(i any) error {
 	s.Cur.Next = ln
 
 	s.Snapped = qstack.New[*Cur]()
-	s.Parsing = qstack.New[*tree.Node[*Node]]()
 
 	return nil
 }
@@ -158,10 +133,8 @@ func (s *R) buffer(i any) error {
 	return err
 }
 
-// Scan decodes the next rune and advances the scanner cursor by one
-// saving the last cursor into s.Last.
+// Scan decodes the next rune and advances the cursor by one.
 func (s *R) Scan() {
-	s.Last = s.Mark()
 	if s.Cur.Next == s.BufLen {
 		s.Cur.Rune = EOD
 		s.State |= Done
@@ -186,16 +159,16 @@ func (s *R) Scan() {
 	s.Cur.Len = ln
 }
 
-// ScanN scans the next n runes advancing n runes forward or returns EOD
+// Any scans the next n runes advancing n runes forward or returns EOD
 // and sets Done state if attempted after already at end of data.
-func (s *R) ScanN(n int) {
+func (s *R) Any(n int) {
 	for i := 0; i < n; i++ {
 		s.Scan()
 	}
 }
 
 // Mark returns a copy of the current scanner cursor to preserve like
-// a bookmark into the buffer data. See Cur, Look, LookSlice.
+// a bookmark into the buffer data.
 func (s *R) Mark() *Cur {
 	if s.Cur == nil {
 		return nil
@@ -222,3 +195,43 @@ func (s *R) Back() {
 		s.Jump(last)
 	}
 }
+
+// Peek returns a string containing all the runes from the current
+// scanner cursor position forward to the number of runes passed.
+// If end of data is encountered it will return everything up until that
+// point.  Also see Slice and SliceTo.
+func (s *R) Peek(n uint) string {
+	buf := ""
+	pos := s.Cur.Byte
+	for c := uint(0); c < n; c++ {
+		r, ln := utf8.DecodeRune(s.Buf[pos:])
+		if ln == 0 {
+			break
+		}
+		buf += string(r)
+		pos += ln
+	}
+	return buf
+}
+
+// PeekSlice returns a string containing all the bytes from the first
+// cursor up to the second cursor without changing the cursor position.
+func (s *R) PeekSlice(beg *Cur, end *Cur) string {
+	return string(s.Buf[beg.Byte:end.Next])
+}
+
+// PeekTo returns a string containing all the bytes from the current
+// scanner position ahead or behind to the passed cursor position
+// without changing positions.
+func (s *R) PeekTo(to *Cur) string {
+	if to.Byte < s.Cur.Byte {
+		return string(s.Buf[to.Byte:s.Cur.Next])
+	}
+	return string(s.Buf[s.Cur.Byte:to.Next])
+}
+
+// NewLine delegates to interval Curs.NewLine to increment the line
+// counter to display better parsing status and error information. It is
+// up to scanner users to call NewLine explicitly to advance the
+// internal cursor when a line is definitively detected.
+func (s *R) NewLine() { s.Cur.NewLine() }

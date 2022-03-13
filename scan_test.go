@@ -79,16 +79,6 @@ func ExampleR_Scan() {
 	// true
 }
 
-func ExampleR_ScanN() {
-	s, _ := scan.New("so")
-	s.Print()
-	s.ScanN(2)
-	s.Print()
-	// Output:
-	// U+0073 's' 1,1-1 (1-1)
-	// <EOD>
-}
-
 func ExampleR_Mark() {
 	s, _ := scan.New("so")
 	s.Print()
@@ -106,10 +96,10 @@ func ExampleR_Mark() {
 
 func ExampleR_Snap_one() {
 	s, _ := scan.New("something here")
-	s.ScanN(4)
+	s.Any(4)
 	s.Print()
 	s.Snap()
-	s.ScanN(4)
+	s.Any(4)
 	s.Print()
 	s.Back()
 	s.Print()
@@ -121,23 +111,68 @@ func ExampleR_Snap_one() {
 
 func ExampleR_Snap_nested() {
 	s, _ := scan.New("something here")
-	s.ScanN(4)
-	s.Print()  // t
-	s.Snap()   // first time
-	s.ScanN(4) //
-	s.Snap()   // second time
-	s.Print()  // g
-	s.Scan()   //
-	s.Print()  // ' '
-	s.Back()   // back to second snap
-	s.Print()  // g
-	s.Back()   // back to first snap
-	s.Print()  // t
-	s.Back()   // (does nothing)
+	s.Any(4)
+	s.Print() // t
+	s.Snap()  // first time
+	s.Any(4)  //
+	s.Snap()  // second time
+	s.Print() // g
+	s.Scan()  //
+	s.Print() // ' '
+	//s.Snapped.Print()
+	s.Back()  // back to second snap
+	s.Print() // g
+	s.Back()  // back to first snap
+	s.Print() // t
+	s.Back()  // (does nothing)
+	s.Print() // t
 	// Output:
 	// U+0074 't' 1,5-5 (5-5)
 	// U+0067 'g' 1,9-9 (9-9)
 	// U+0020 ' ' 1,10-10 (10-10)
 	// U+0067 'g' 1,9-9 (9-9)
 	// U+0074 't' 1,5-5 (5-5)
+	// U+0074 't' 1,5-5 (5-5)
+}
+
+func ExamplePeek() {
+	s, _ := scan.New("some thing")
+	s.Any(6)
+	fmt.Println(s.Peek(3))
+	// Output:
+	// hin
+}
+
+func ExampleR_PeekTo() {
+	s, _ := scan.New("some thing")
+	s.Scan()
+	m1 := s.Mark()
+	m1.Print()
+	s.Any(3)
+	fmt.Printf("%q\n", s.PeekTo(m1)) //  behind
+	s.Any(4)
+	m2 := s.Mark()
+	m2.Print()
+	s.Jump(m1)
+	fmt.Printf("%q\n", s.PeekTo(m2)) //  ahead
+	// Output:
+	// U+006F 'o' 1,2-2 (2-2)
+	// "ome "
+	// U+006E 'n' 1,9-9 (9-9)
+	// "ome thin"
+}
+
+func ExampleR_PeekSlice() {
+	s, _ := scan.New("some thing")
+	s.Scan()
+	m1 := s.Mark()
+	m1.Print()
+	s.Any(7)
+	m2 := s.Mark()
+	m2.Print()
+	fmt.Println(s.PeekSlice(m1, m2))
+	// Output:
+	// U+006F 'o' 1,2-2 (2-2)
+	// U+006E 'n' 1,9-9 (9-9)
+	// ome thin
 }

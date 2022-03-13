@@ -1,4 +1,4 @@
-# Rune Scanner/Parser in Go 1.18+
+# Rune Scanner with Cursors in Go 1.18+
 
 [![Go Version](https://img.shields.io/github/go-mod/go-version/rwxrob/scan)](https://tip.golang.org/doc/go1.18)
 [![GoDoc](https://godoc.org/github.com/rwxrob/scan?status.svg)](https://godoc.org/github.com/rwxrob/scan)
