@@ -6,6 +6,8 @@ package scan
 import (
 	"fmt"
 	"log"
+
+	"github.com/rwxrob/scan/tk"
 )
 
 // Pos contains the user-land position for reporting back when there is
@@ -31,10 +33,10 @@ func (p *Pos) NewLine() {
 // Cur is a cursor structure that points to specific position within
 // buffered data. An internal Cur is used within the Parser. Cursors
 // are returned by methods of Parser implementations.  Cursors must be
-// set to EOD and have Len set to 0 if the Parser is asked to read
+// set to tk.EOD and have Len set to 0 if the Parser is asked to read
 // beyond the end of the data.  Manipulating the values of a Curs
-// directly is strongly discouraged (but not worth the performance hit
-// of stopping it with interface encapsulation).
+// directly is strongly discouraged. Instead use scan.R.Mark instead to
+// create a new *Cur at a given location.
 type Cur struct {
 	Pos
 	Rune rune // last rune decoded
@@ -52,11 +54,12 @@ type Cur struct {
 //   line rune offset |  overall rune offset
 //     line byte offset
 //
+// Just <EOD> is printed if the end of data has been reached.
 func (c *Cur) String() string {
 	if c == nil {
 		return "<nil>"
 	}
-	if c.Rune == EOD {
+	if c.Rune == tk.EOD {
 		return "<EOD>"
 	}
 	s := fmt.Sprintf(`%U %q %v,%v-%v (%v-%v)`,

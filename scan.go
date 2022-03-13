@@ -11,25 +11,32 @@ package scan
 import (
 	"fmt"
 	"io"
+	"log"
 	"unicode/utf8"
 
+	"github.com/rwxrob/scan/tk"
 	"github.com/rwxrob/structs/qstack"
 )
 
 const (
-
-	// EOD is a special value that is returned when the end of data is
-	// reached enabling functional parser functions to look for it reliably
-	// no matter what is being parsed. Since rune is alias for int32 and
-	// Unicode (currently) ends at \U+FFFD we are safe to use the largest
-	// possible valid rune value. Passing EOD directly to Expect always
-	// stops the scan where it is.
-	EOD rune = 1<<31 - 1 // max int32
-
-	// Done means the scanner has reached the end of data and EOD has been
-	// set as the last scanned rune.
-	Done = 1 << (iota + 1)
+	EOD = 1 << (iota + 1) // end of data has been reached
+	ERR                   // encountered at least one error while scanning
 )
+
+// ---------------------------- scan.Error ----------------------------
+
+// Error captures an error at a specific location.
+type Error struct {
+	Msg string
+	At  *Cur
+}
+
+// String fulfills the fmt.Stringer interface.
+func (e *Error) String() string {
+	return fmt.Sprintf(`%v at %v`, e.Msg, e.At)
+}
+
+// ------------------------------ scan.R ------------------------------
 
 // R (as in scan.R or "scanner") implements a buffered data, non-linear,
 // rune-centric, scanner with cursor and bookmarks for dealing with
@@ -50,10 +57,12 @@ type R struct {
 	Snapped *qstack.QStack[*Cur]
 
 	// State allows parser creators to add additional bitwise states as
-	// needed. States from 1-999 are reserved but only Done (1) is
-	// currently defined. Developers should start their bitwise iotas at
-	// 1000.
+	// needed. States from 1-999 are reserved. Developers should start
+	// their bitwise iotas at 1000.
 	State int
+
+	// Errors contains errors encountered while scanning expressions.
+	Errors *qstack.QStack[*Error]
 }
 
 // New creates a new scan.R instance and initializes it.
@@ -82,11 +91,11 @@ func (s *R) Init(i any) error {
 		return err
 	}
 
-	r, ln := utf8.DecodeRune(s.Buf) // scan first
+	r, ln := utf8.DecodeRune(s.Buf)
 	if ln == 0 {
-		r = EOD
-		s.State |= Done
-		return fmt.Errorf("scanner: failed to scan first rune")
+		r = tk.EOD
+		s.State |= EOD
+		return fmt.Errorf("failed to scan first rune")
 	}
 
 	s.Cur.Rune = r
@@ -94,22 +103,31 @@ func (s *R) Init(i any) error {
 	s.Cur.Next = ln
 
 	s.Snapped = qstack.New[*Cur]()
+	s.Errors = qstack.New[*Error]()
 
 	return nil
 }
 
-// ---------------------------- marshaling ----------------------------
+// Error pushes a new error on Errors stack. The last error is always
+// displayed with the scan.R is marshaled/printed as a string.
+func (s *R) Errorf(tpl string, i ...any) {
+	msg := fmt.Sprintf(tpl, i...)
+	s.Errors.Push(&Error{msg, s.Mark()})
+}
 
-// String delegates to internal cursor String.
-func (s *R) String() string { return s.Cur.String() }
+// String prints the last error and position.
+func (s *R) String() string {
+	if s.Errors.Len > 0 {
+		return s.Errors.Pop().String()
+	}
+	return s.Cur.String()
+}
 
 // Print delegates to internal cursor Print.
-func (s *R) Print() { s.Cur.Print() }
+func (s *R) Print() { fmt.Println(s.String()) }
 
 // Log delegates to internal cursor Log.
-func (s *R) Log() { s.Cur.Log() }
-
-// --------------------------------------------------------------------
+func (s *R) Log() { log.Print(s.String()) }
 
 func (s *R) buffer(i any) error {
 	var err error
@@ -124,7 +142,7 @@ func (s *R) buffer(i any) error {
 	case []byte:
 		s.Buf = v
 	default:
-		return fmt.Errorf("scanner: unsupported input type: %T", i)
+		return fmt.Errorf("cannot buffer type: %T", i)
 	}
 	s.BufLen = len(s.Buf)
 	if s.BufLen == 0 {
@@ -133,11 +151,13 @@ func (s *R) buffer(i any) error {
 	return err
 }
 
-// Scan decodes the next rune and advances the cursor by one.
+// Scan decodes the next rune and advances the cursor by one.  If the
+// scan exceeds BufLen then Cur.Rune is set to tk.EOD and the EOD State
+// is set.
 func (s *R) Scan() {
 	if s.Cur.Next == s.BufLen {
-		s.Cur.Rune = EOD
-		s.State |= Done
+		s.Cur.Rune = tk.EOD
+		s.State |= EOD
 		return
 	}
 	ln := 1
@@ -149,8 +169,8 @@ func (s *R) Scan() {
 		s.Cur.Byte = s.Cur.Next
 		s.Cur.Pos.LineByte += s.Cur.Len
 	} else {
-		r = EOD
-		s.State |= Done
+		r = tk.EOD
+		s.State |= EOD
 	}
 	s.Cur.Rune = r
 	s.Cur.Pos.Rune += 1
@@ -159,8 +179,7 @@ func (s *R) Scan() {
 	s.Cur.Len = ln
 }
 
-// Any scans the next n runes advancing n runes forward or returns EOD
-// and sets Done state if attempted after already at end of data.
+// Any calls Scan n number of times stopping if end of data reached.
 func (s *R) Any(n int) {
 	for i := 0; i < n; i++ {
 		s.Scan()

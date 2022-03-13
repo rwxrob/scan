@@ -38,7 +38,7 @@ func ExampleR_Init_error() {
 	err := s.Init([]rune{'f', 'o', 'o'})
 	fmt.Println(err)
 	// Output:
-	// scanner: unsupported input type: []int32
+	// cannot buffer type: []int32
 }
 
 func ExampleR_marshaling() {
@@ -64,13 +64,13 @@ func ExampleR_marshaling() {
 
 func ExampleR_Scan() {
 	s, _ := scan.New("so")
-	fmt.Println(s.State == s.State|scan.Done)
+	fmt.Println(s.State == s.State|scan.EOD)
 	s.Print()
 	s.Scan()
 	s.Print()
 	s.Scan()
 	s.Print()
-	fmt.Println(s.State == s.State|scan.Done)
+	fmt.Println(s.State == s.State|scan.EOD)
 	// Output:
 	// false
 	// U+0073 's' 1,1-1 (1-1)
