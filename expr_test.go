@@ -83,9 +83,9 @@ func ExampleX_optional() {
 
 func ExampleX_any() {
 	s := scan.New("some thing")
-	s.X(z.A(3))
+	s.X(z.A{3})
 	s.Print()
-	s.X(z.A(30))
+	s.X(z.A{30})
 	s.Print()
 	// Output:
 	// U+0065 'e' 1,4-4 (4-4)

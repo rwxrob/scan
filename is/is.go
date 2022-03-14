@@ -36,8 +36,8 @@ type P []any
 // any are not the scan fails. (Equal to (?foo) in regular expressions.)
 type X []any
 
-// A ("any") advances exactly N times matching any rune.
-type A int
+// A ("any") advances exactly v[0] times matching any rune.
+type A []int
 
 // Y ("yes") is a set of positive lookahead expressions. If any are
 // seen at the current cursor position the scan will proceed without

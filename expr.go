@@ -67,7 +67,7 @@ func (s *R) X(expr ...any) bool {
 		return true
 
 	case z.A: // "any" (advances exactly N of any rune) -----------------
-		for i := 0; i < int(v); i++ {
+		for i := 0; i < v[0]; i++ {
 			s.Scan()
 		}
 		return true
