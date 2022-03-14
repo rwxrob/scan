@@ -20,7 +20,6 @@ import (
 
 const (
 	EOD = 1 << (iota + 1) // end of data has been reached
-	ERR                   // encountered at least one error while scanning
 )
 
 // ---------------------------- scan.Error ----------------------------
@@ -110,7 +109,6 @@ func (s *R) Init(i any) {
 
 // Error pushes the message from the passed error onto the Err stack.
 func (s *R) Error(err error) {
-	s.State |= ERR
 	s.Err.Push(&Error{fmt.Sprintf(`%v`, err), s.Mark()})
 }
 
@@ -118,7 +116,6 @@ func (s *R) Error(err error) {
 // is always displayed with the scan.R is marshaled/printed as a string.
 func (s *R) Errorf(tpl string, i ...any) {
 	msg := fmt.Sprintf(tpl, i...)
-	s.State |= ERR
 	s.Err.Push(&Error{msg, s.Mark()})
 }
 

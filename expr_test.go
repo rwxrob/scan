@@ -1,7 +1,6 @@
 package scan_test
 
 import (
-	"fmt"
 	"log"
 	"os"
 
@@ -18,7 +17,6 @@ func ExampleX_rune() {
 	s.Print()
 	s.X('\t')
 	s.Print()
-	fmt.Println(s.State == s.State|scan.ERR)
 	// Output:
 	// U+006F 'o' 1,2-2 (2-2)
 	// U+006D 'm' 1,3-3 (3-3)
