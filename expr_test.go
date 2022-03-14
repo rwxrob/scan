@@ -66,3 +66,14 @@ func ExampleX_endLine() {
 	// Output:
 	// U+0065 'e' 1,15-15 (15-15)
 }
+
+func ExampleX_optional() {
+	s := scan.New("some thing")
+	s.X(z.O{'s', 'S'})
+	s.Print()
+	s.X(z.O{'z', 'x'})
+	s.Print()
+	// Output:
+	// U+006F 'o' 1,2-2 (2-2)
+	// U+006F 'o' 1,2-2 (2-2)
+}

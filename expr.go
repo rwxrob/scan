@@ -31,7 +31,7 @@ func (s *R) X(expr ...any) bool {
 
 	switch v := expr[0].(type) {
 
-	case rune: // ------------------------------------------------------
+	case rune: // -------------------------------------------------------
 		if s.Cur.Rune == v || v == tk.ANY {
 			s.Scan()
 			return true
@@ -40,7 +40,7 @@ func (s *R) X(expr ...any) bool {
 		s.Errorf(`expected %q`, v)
 		return false
 
-	case string: // ----------------------------------------------------
+	case string: // (just a sequence of runes, advances) ----------------
 		for _, i := range []rune(v) {
 			if s.Cur.Rune != i {
 				s.Back()
@@ -51,7 +51,7 @@ func (s *R) X(expr ...any) bool {
 		}
 		return true
 
-	case z.I: // -------------------------------------------------------
+	case z.I: // "in" (one of required, advances, in order) -------------
 		for _, i := range v {
 			s.Snap()
 			if s.X(i) {
@@ -63,7 +63,18 @@ func (s *R) X(expr ...any) bool {
 		s.Errorf(`expected one of %q`, v)
 		return false
 
-	case z.X: // -------------------------------------------------------
+	case z.O: // "optional" (if any advances, not required) ------------
+		for _, i := range v {
+			s.Snap()
+			if s.X(i) {
+				return true
+			}
+			s.Err.Pop()
+			s.Back()
+		}
+		return true
+
+	case z.X: // "expression" (each must match in order, advances) -----
 		for _, i := range v {
 			if !s.X(i) {
 				s.Back()
@@ -72,7 +83,7 @@ func (s *R) X(expr ...any) bool {
 		}
 		return true
 
-	default:
+	default: // --------------------------------------------------------
 		s.Back()
 		s.Errorf(`unsupported expression type %T`, v)
 		return false
