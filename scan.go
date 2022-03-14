@@ -257,9 +257,3 @@ func (s *R) PeekTo(to *Cur) string {
 	}
 	return string(s.Buf[s.Cur.Byte:to.Next])
 }
-
-// NewLine delegates to interval Curs.NewLine to increment the line
-// counter to display better parsing status and error information. It is
-// up to scanner users to call NewLine explicitly to advance the
-// internal cursor when a line is definitively detected.
-func (s *R) NewLine() { s.Cur.NewLine() }

@@ -7,6 +7,7 @@ const (
 	// no matter what is being parsed. Since rune is alias for int32 and
 	// Unicode (currently) ends at \U+FFFD we are safe to use the largest
 	// possible valid rune value.
-	EOD rune = 1<<31 - 1 // max int32
-	ANY                  // represents any valid rune
+	EOD rune = 1<<31 - (iota + 1) // end of data
+	ANY                           // represents any valid rune
+	NL                            // trigger new line in cursor
 )

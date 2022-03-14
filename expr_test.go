@@ -206,10 +206,10 @@ func ExampleX_first_Class_Functions() {
 	ws := func(s *scan.R) bool { return s.X(z.I{' ', '\t', '\r', '\n'}) }
 	// ws := z.X(' ', '\t', '\r', '\n')
 
-	s := scan.New("some thing")
-	s.X(scanSome, logit, ws, scanTh)
+	s := scan.New("some\nthing")
+	s.X(scanSome, logit, ws, tk.NL, scanTh)
 	s.Print()
 	// Output:
-	// U+0020 ' ' 1,5-5 (5-5)
-	// U+0069 'i' 1,8-8 (8-8)
+	// U+000A '\n' 1,5-5 (5-5)
+	// U+0069 'i' 2,3-3 (8-8)
 }

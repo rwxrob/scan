@@ -32,12 +32,14 @@ func (s *R) X(expr ...any) bool {
 	switch v := expr[0].(type) {
 
 	case rune: // -------------------------------------------------------
-		m := s.Mark()
 		if s.Cur.Rune == v || v == tk.ANY {
 			s.Scan()
 			return true
 		}
-		s.Jump(m)
+		if v == tk.NL {
+			s.Cur.NewLine()
+			return true
+		}
 		s.Errorf(`expected %q`, v)
 		return false
 
