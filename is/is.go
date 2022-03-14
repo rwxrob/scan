@@ -2,42 +2,22 @@
 // SPDX-License-Identifier: Apache-2.0
 
 /*
-Package z (often imported as "is") defines the GOPEGN language
-implemented entirely using Go types (mostly slices and structs). GOPEGN
-can be 100% transpiled to and from the Parsing Expression Grammer
-Notation (PEGN).
-
-Slices represent sets of possibilities.
-
-Structs provide parameters for more complex expressions and are are
-guaranteed never to change allowing them to be dependably used in
-assignment without struct field names using Go's inline composable
-syntax. Some editors may need configuring to allow this since in general
-practice this can create subtle (but substantial) foot-guns for
-maintainers.
-
-"Advancing" expressions will advance the scan to the end of the
-expression match.
-
-"Look-ahead" expressions simply check for a match but do not advance the
-scan. Developers should take careful note of the difference in the
-documentation.
-
-Composites are compound expressions composed of others. They represent
-the tokens and classes from PEGN and other grammars and are designed to
-simplify grammar development at a higher level.
-
-First-class functions are not strictly an expression type but are fully
-supported by the GOPEGN grammar and equate to StateDef PEGN definitions
-which are identified by all capitals but begin with underscore (_).
-GOPEGN generators may choose to create stub functions for such when
-transpiling from PEGN and developers may choose to use the same function
-naming convention to distinguish such functions even when no code
-generation is involved.
+Package z ("is") defines the Go scan.X interpreted expression language
+(which is passed directly to the scan.X method). The language is
+implemented entirely using valid Go types (mostly slices) and
+first-class functions of the form func(s *scan.R) bool. Most expressions
+will advance the scan to the end of the match but can also be placed
+within lookahead expressions (z.Y/z.N) to cancel advancement.
+Expressions can be easily combine and combinations can be easily shared
+and imported through the use of Go modules and packages. Generating
+scan.X Go code from other expression grammars is rather trivial and was
+the primary motivation behind the scan.X syntax --- particularly when
+a scanner is clearly a better choice over multiple regular expressions,
+for example, when creating domain specific languages, grammars, linters,
+and language servers. (See PEGN, PEG, ABNF, EBNF, regular expressions,
+and others as well as the list of dependent Go modules.)
 */
 package z
-
-// ------------------------------- core -------------------------------
 
 // P ("parse") is a named sequence of expressions that will be parsed
 // and captured as a new Node and added to the scan.R.Nodes field
@@ -56,7 +36,8 @@ type P []any
 // any are not the scan fails. (Equal to (?foo) in regular expressions.)
 type X []any
 
-// ------------------------------- sets -------------------------------
+// A ("any") advances exactly N times matching any rune.
+type A int
 
 // Y ("yes") is a set of positive lookahead expressions. If any are
 // seen at the current cursor position the scan will proceed without
@@ -93,68 +74,24 @@ type T []any
 // boundary.
 type Ti []any
 
-// --------------------------- parameterized --------------------------
+// R ("range","rune") is a advancing expression that
+// matches a single Unicode code point (rune, int32) from an inclusive
+// consecutive range from first (v[0]) to last (v[1]).
+type R []rune
 
-// MM ("minmax") is a parameterized advancing expression that matches an
-// inclusive minimum and maximum count of the given expression (This).
-type MM struct {
-	Min  int
-	Max  int
-	This any
-}
+// MM ("minmax") is an advancing expression that matches an inclusive
+// minimum (v[0]) and maximum (v[1]) count of the given expression
+// (v[2]) in "greedy" fashion (the maximum possible matches are
+// advanced).
+type MM []any
 
-// M ("min") is a parameterized advancing expression that matches an
-// inclusive minimum number of the given expression item (This). Use
-// within is.It to disable advancement.
-type M struct {
-	Min  int
-	This any
-}
+// M ("min") is an advancing expression that matches an inclusive
+// minimum number (v[0]) of the given expression item (v[1]).
+type M []any
 
 // M1 is shorthand for z.M{1,This}.
-type M1 struct{ This any }
+type M1 []any
 
 // C is a parameterized advancing expression that matches an exact count
-// of the given expression (This). Use within is.It to disable
-// advancement.
-type C struct {
-	N    int
-	This any
-}
-
-// C2 is shorthand for z.C{2,This}.
-type C2 struct{ This any }
-
-// C3 is shorthand for z.C{3,This}.
-type C3 struct{ This any }
-
-// C4 is shorthand for z.C{4,This}.
-type C4 struct{ This any }
-
-// C5 is shorthand for z.C{5,This}.
-type C5 struct{ This any }
-
-// C6 is shorthand for z.C{6,This}.
-type C6 struct{ This any }
-
-// C7 is shorthand for z.C{7,This}.
-type C7 struct{ This any }
-
-// C8 is shorthand for z.C{8,This}.
-type C8 struct{ This any }
-
-// C9 is shorthand for z.C{9,This}.
-type C9 struct{ This any }
-
-// A ("any") is short for z.C{N,tk.ANY}.
-type A struct {
-	N int
-}
-
-// R ("range","rune") is a parameterized advancing expression that
-// matches a single Unicode code point (rune, int32) from an inclusive
-// consecutive set from First to Last (First,Last).
-type R struct {
-	First rune
-	Last  rune
-}
+// (v[0]) of the given expression (v[1]).
+type C []any
