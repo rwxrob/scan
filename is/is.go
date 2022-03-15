@@ -25,11 +25,7 @@ package z
 // must be an integer (usually a constant) identifying the type of Node.
 // If any expression fails to match the scan fails.  Otherwise, a new
 // tree.Node[string] is added under the current node and the scan
-// proceeds. Nodes must only contain other nodes or a string value,
-// never both. If the first item in the sequence after the type is not
-// also a node (z.P) then the node is marked as "edge" (or "leaf") and
-// any nodes detected further in the sequence will cause the scan to
-// fail with a syntax error.
+// proceeds.
 type P []any
 
 // X ("expression") is a sequence of expressions used for grouping.  If
@@ -86,8 +82,12 @@ type R []rune
 type MM []any
 
 // M ("min") is an advancing expression that matches an inclusive
-// minimum number (v[0]) of the given expression item (v[1]).
+// minimum number (v[0]) of the given expression item (v[1]) "greedily".
 type M []any
+
+// M0 is shorthand for z.M{0,This}. This is useful to make otherwise
+// optional matches "greedy".
+type M0 []any
 
 // M1 is shorthand for z.M{1,This}.
 type M1 []any

@@ -5,12 +5,10 @@ import (
 	"github.com/rwxrob/scan/tk"
 )
 
-// X is the GOPEGN language interpreter that will process any number of
-// valid GOPEGN expressions for scanning, looking ahead, parsing, and
-// executing first-class functions. The GOPEGN language can be directly
-// generated from any valid PEGN making it ideal for quickly needed
-// domain specific languages and other grammars. See the "is" and "tk"
-// packages. X will push an Error immediately return if any error is
+// X is an expression language interpreter that will process any number
+// of valid expressions for scanning, looking ahead, parsing, and
+// executing first-class functions. See the "is" and "tk" packages.
+// X will push an Error and immediately return if any error is
 // encountered. For simplicity, the interpreter uses functional
 // recursion in its implementation which might be undesirable in certain
 // exceptional cases where grammars produce unusually deep nesting. This
@@ -56,7 +54,20 @@ func (s *R) X(expr ...any) bool {
 		return true
 
 	case z.P: // "parse" (parse tree node) ------------------------------
-		// TODO
+		cur := s.Nodes.Peek()
+		n := s.Tree.Node(v[0].(int), "")
+		m := s.Mark()
+		r := *s.Tree.Root
+		s.Nodes.Push(n)
+		defer s.Nodes.Pop()
+		if !s.X(v[1:]...) {
+			s.Jump(m)
+			s.Tree.Root = &r
+			return false
+		}
+		n.V = s.PeekSlice(m, s.Last)
+		cur.Append(n)
+		return true
 
 	case z.X: // "expression" (each must match in order, advances) ------
 		m := s.Mark()
@@ -184,6 +195,9 @@ func (s *R) X(expr ...any) bool {
 		}
 		s.Errorf(`expected at least %v of %q`, v[0], v[1])
 		return false
+
+	case z.M0: // "min zero" (shorthand for z.M{0,This}) -----------------
+		return s.X(z.M{0, v[0]})
 
 	case z.M1: // "min one" (shorthand for z.M{1,This}) -----------------
 		return s.X(z.M{1, v[0]})

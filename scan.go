@@ -16,6 +16,7 @@ import (
 
 	"github.com/rwxrob/scan/tk"
 	"github.com/rwxrob/structs/qstack"
+	"github.com/rwxrob/structs/tree"
 )
 
 const (
@@ -52,8 +53,11 @@ type R struct {
 	// Cur is the active current cursor pointing to the Buf data.
 	Cur *Cur
 
+	// Last contains the last cursor position before Scan.
+	Last *Cur
+
 	// Snapped contains the latest Cur when Snap was called.
-	Snapped *qstack.QStack[*Cur]
+	Snapped *qstack.QS[*Cur]
 
 	// State allows parser creators to add additional bitwise states as
 	// needed. States from 1-999 are reserved. Developers should start
@@ -61,7 +65,17 @@ type R struct {
 	State int
 
 	// Err contains errors encountered while scanning expressions.
-	Err *qstack.QStack[*Error]
+	Err *qstack.QS[*Error]
+
+	// Tree contains the rooted node tree created by z.P scan.X expressions.
+	Tree *tree.E[string]
+
+	// Nodes is used to construct what ultimately becomes the Tree.Root
+	// after all z.P scan.X parsing completes. Init pushes Tree.Root onto
+	// it to begin. It is public so that first-class function scan.X
+	// expression authors can make use of it for their own parsing
+	// possibilities.
+	Nodes *qstack.QS[*tree.Node[string]]
 }
 
 // New creates a new scan.R instance and initializes it pushing an error
@@ -75,11 +89,15 @@ func New(i any) *R {
 // Init reads all of passed parsable data (io.Reader, string, []byte)
 // into buffered memory, scans the first rune, and sets the internals of
 // scanner appropriately pushing an error to Err if anything happens
-// while attempting to read and buffer the data (OOM, etc.).
+// while attempting to read and buffer the data (OOM, etc.). Init sets
+// Snapped, Err, Tree, Nodes, and Cur to their initialized values.
 func (s *R) Init(i any) {
 
 	s.Snapped = qstack.New[*Cur]()
 	s.Err = qstack.New[*Error]()
+	s.Tree = tree.New[string]()
+	s.Nodes = qstack.New[*tree.Node[string]]()
+	s.Nodes.Push(s.Tree.Root)
 
 	s.Cur = new(Cur)
 	s.Cur.Pos = Pos{}
@@ -158,13 +176,14 @@ func (s *R) buffer(i any) {
 }
 
 // Scan decodes the next rune and advances the cursor by one.  If the
-// scan exceeds BufLen then Cur.Rune is set to tk.EOD and the EOD State
-// is set.
-func (s *R) Scan() {
+// scan exceeds BufLen then Cur.Rune is set to tk.EOD, EOD State
+// is set, and Scan returns false.
+func (s *R) Scan() bool {
+	s.Last = s.Mark()
 	if s.Cur.Next == s.BufLen {
 		s.Cur.Rune = tk.EOD
 		s.State |= EOD
-		return
+		return false
 	}
 	ln := 1
 	r := rune(s.Buf[s.Cur.Next])
@@ -183,6 +202,7 @@ func (s *R) Scan() {
 	s.Cur.Next += ln
 	s.Cur.Pos.LineRune += 1
 	s.Cur.Len = ln
+	return true
 }
 
 // Any calls Scan n number of times stopping if end of data reached.

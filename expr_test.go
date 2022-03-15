@@ -1,6 +1,7 @@
 package scan_test
 
 import (
+	"fmt"
 	"log"
 	"os"
 
@@ -21,8 +22,6 @@ func ExampleX_rune() {
 	// U+006F 'o' 1,2-2 (2-2)
 	// U+006D 'm' 1,3-3 (3-3)
 	// expected '\t' at U+006D 'm' 1,3-3 (3-3)
-	// true
-
 }
 
 func ExampleX_string() {
@@ -210,4 +209,128 @@ func ExampleX_first_Class_Functions() {
 	// Output:
 	// U+000A '\n' 1,5-5 (5-5)
 	// U+0069 'i' 2,3-3 (8-8)
+}
+
+func ExampleX_parse_Single() {
+	s := scan.New("some thing")
+	s.X(z.P{1, 's', 'o', "me"})
+	s.Print()
+	fmt.Println(s.Tree.Root.Count)
+	s.Tree.Root.Print()
+	// Output:
+	// U+0020 ' ' 1,5-5 (5-5)
+	// 1
+	// {"T":1,"N":[{"T":1,"V":"some"}]}
+}
+
+func ExampleX_parse_Two() {
+	s := scan.New("some thing")
+	s.X(z.P{2, "so"}, z.P{2, "me"})
+	s.Print()
+	fmt.Println(s.Tree.Root.Count)
+	s.Tree.Root.Print()
+	// Output:
+	// U+0020 ' ' 1,5-5 (5-5)
+	// 2
+	// {"T":1,"N":[{"T":2,"V":"so"},{"T":2,"V":"me"}]}
+
+}
+
+func ExampleX_parse_Nested_Simple() {
+	s := scan.New("some thing")
+	s.X(z.P{2, z.P{3, "some"}})
+	s.Print()
+	fmt.Println(s.Tree.Root.Count)
+	s.Tree.Root.Print()
+	// Output:
+	// U+0020 ' ' 1,5-5 (5-5)
+	// 1
+	// {"T":1,"N":[{"T":2,"V":"some","N":[{"T":3,"V":"some"}]}]}
+
+}
+
+func ExampleX_parse_Nested_with_Other() {
+	s := scan.New("some thing")
+	s.X(z.P{2, "some", ' ', z.P{3, "th"}})
+	s.Print()
+	fmt.Println(s.Tree.Root.Count)
+	s.Tree.Root.Print()
+	// Output:
+	// U+0069 'i' 1,8-8 (8-8)
+	// 1
+	// {"T":1,"N":[{"T":2,"V":"some th","N":[{"T":3,"V":"th"}]}]}
+}
+
+func ExampleX_parse_Nested_with_Two_Other() {
+	s := scan.New("some thing")
+	s.X(z.P{2, z.P{3, "some"}, ' ', z.P{3, "th"}})
+	s.Print()
+	fmt.Println(s.Tree.Root.Count)
+	s.Tree.Root.Print()
+	// Output:
+	// U+0069 'i' 1,8-8 (8-8)
+	// 1
+	// {"T":1,"N":[{"T":2,"V":"some th","N":[{"T":3,"V":"some"},{"T":3,"V":"th"}]}]}
+}
+
+func ExampleX_parse_Nested_Expression() {
+
+	const WORD = 2
+	const CHAR = 3
+
+	ch := z.P{CHAR, z.R{'a', 'z'}}
+	word := z.P{WORD, z.M1{ch}}
+	ws := z.I{' ', '\t', '\r', '\n'}
+
+	s := scan.New("meE")
+	s.X(z.X{word, ws}, word)
+	s.Print()
+	s.Tree.Root.Print()
+
+	// Output:
+	// expected one of [' ' '\t' '\r' '\n'] at U+0045 'E' 1,3-3 (3-3)
+	// {"T":1}
+}
+
+/*
+func ExampleX_parse_Nested_Expression_EOD() {
+
+	const WORD = 2
+	const CHAR = 3
+
+	ch := z.P{CHAR, z.R{'a', 'z'}}
+	word := z.P{WORD, z.M1{ch}}
+	ws := z.I{' ', '\t', '\r', '\n'}
+
+	s := scan.New("me")
+	s.X(z.X{word, ws}, word)
+	s.Print()
+	s.Tree.Root.Print()
+
+	// Output:
+	// expected one of [' ' '\t' '\r' '\n'] at U+0045 'E' 1,3-3 (3-3)
+	// {"T":1}
+}
+*/
+
+func ExampleX_parse_Nested_Complex() {
+
+	const WORD = 2
+	const CHAR = 3
+
+	ch := z.P{CHAR, z.R{'a', 'z'}}
+	word := z.P{WORD, z.M1{ch}}
+	ws := z.I{' ', '\t', '\r', '\n'}
+
+	s := scan.New("go me again")
+	s.X(z.X{word, ws}, word)
+	s.Print()
+	nodes := s.Tree.Root.Nodes()
+	fmt.Println(s.Tree.Root.Count, nodes[0].Count, nodes[1].Count)
+	s.Tree.Root.Print()
+
+	// Output:
+	// U+0020 ' ' 1,6-6 (6-6)
+	// 2 2 2
+	// {"T":1,"N":[{"T":2,"V":"go","N":[{"T":3,"V":"g"},{"T":3,"V":"o"}]},{"T":2,"V":"me","N":[{"T":3,"V":"m"},{"T":3,"V":"e"}]}]}
 }
