@@ -55,11 +55,11 @@ func (s *R) X(expr ...any) bool {
 
 	case z.P: // "parse" (parse tree node) ------------------------------
 		cur := s.Nodes.Peek()
-		n := s.Tree.Node(v[0].(int), "")
+		n := s.Tree.Node(v.T, "")
 		m := s.Mark()
 		s.Nodes.Push(n)
 		defer s.Nodes.Pop()
-		if !s.X(v[1:]...) {
+		if !s.X(v.This) {
 			s.Jump(m)
 			return false
 		}
@@ -80,11 +80,12 @@ func (s *R) X(expr ...any) bool {
 		return true
 
 	case z.A: // "any" (advances exactly N of any rune) -----------------
-		return s.Any(v[0])
+		return s.Any(v.N)
 
 	case z.Y: // "yes" (positive look-ahead, no advance, ordered) -------
 		m := s.Mark()
 		if s.X(z.X(v)) {
+			// FIXME expand and check for illegal z.P
 			s.Jump(m)
 			return true
 		}
@@ -95,6 +96,7 @@ func (s *R) X(expr ...any) bool {
 		m := s.Mark()
 		for _, i := range v {
 			if s.X(i) {
+				// FIXME expand and check for illegal z.P
 				s.Errorf(`unexpected %q`, i)
 				s.Jump(m)
 				return false
@@ -117,8 +119,8 @@ func (s *R) X(expr ...any) bool {
 		return false
 
 	case z.O: // "optional" (if any advances, not required) -------------
+		m := s.Mark()
 		for _, i := range v {
-			m := s.Mark()
 			if s.X(i) {
 				return true
 			}
@@ -131,7 +133,7 @@ func (s *R) X(expr ...any) bool {
 		m := s.Mark()
 		for {
 			m := s.Mark()
-			if s.X(z.X(v)) {
+			if s.X(v.This) {
 				s.Jump(m)
 				return true
 			}
@@ -141,13 +143,13 @@ func (s *R) X(expr ...any) bool {
 			}
 		}
 		s.Jump(m)
-		s.Errorf("%q not found anywhere in remaining buffer starting", v)
+		s.Errorf("%v not found anywhere in remaining buffer starting", v)
 		return false
 
 	case z.Ti: // "to" (advances to match and excludes) ------------------
 		m := s.Mark()
 		for {
-			if s.X(z.X(v)) {
+			if s.X(v.This) {
 				return true
 			}
 			s.Err.Pop()
@@ -156,65 +158,65 @@ func (s *R) X(expr ...any) bool {
 			}
 		}
 		s.Jump(m)
-		s.Errorf("%q not found anywhere in remaining buffer starting", v)
+		s.Errorf("%v not found anywhere in remaining buffer starting", v)
 		return false
 
 	case z.R: // "range" (inclusive range between rune int values) ------
 		m := s.Mark()
-		if v[0] <= s.Cur.Rune && s.Cur.Rune <= v[1] {
+		if v.First <= s.Cur.Rune && s.Cur.Rune <= v.Last {
 			s.Scan()
 			return true
 		}
 		s.Jump(m)
-		s.Errorf(`expected %q-%q`, v[0], v[1])
+		s.Errorf(`expected %q-%q`, v.First, v.Last)
 		return false
 
 	case z.MM: // "min max" (minimum and maximum count of, advances) ----
 		m := s.Mark()
 		count := 0
 		for s.Cur.Rune != tk.EOD {
-			if !s.X(v[2]) {
+			if !s.X(v.This) {
 				s.Err.Pop()
 				break
 			}
 			count++
 		}
-		if v[0].(int) <= count && count <= v[1].(int) {
+		if v.Min <= count && count <= v.Max {
 			return true
 		}
 		s.Jump(m)
-		s.Errorf(`expected %v-%v of %q`, v[0], v[1], v[2])
+		s.Errorf(`expected %v-%v of %q`, v.Min, v.Max, v.This)
 		return false
 
 	case z.M: // "min" (minimum and maximum count of, advances) ---------
 		m := s.Mark()
 		count := 0
 		for s.Cur.Rune != tk.EOD {
-			if !s.X(v[1]) {
+			if !s.X(v.This) {
 				s.Err.Pop()
 				break
 			}
 			count++
 		}
-		if v[0].(int) <= count {
+		if v.Min <= count {
 			return true
 		}
 		s.Jump(m)
-		s.Errorf(`expected at least %v of %q`, v[0], v[1])
+		s.Errorf(`expected %v`, v)
 		return false
 
 	case z.M0: // "min zero" (shorthand for z.M{0,This}) -----------------
-		return s.X(z.M{0, v[0]})
+		return s.X(z.M{0, v.This})
 
 	case z.M1: // "min one" (shorthand for z.M{1,This}) -----------------
-		return s.X(z.M{1, v[0]})
+		return s.X(z.M{1, v.This})
 
 	case z.C: // "count" (match exactly N of, advances) -----------------
 		m := s.Mark()
-		for i := 0; i < v[0].(int); i++ {
-			if !s.X(v[1]) {
+		for i := 0; i < v.N; i++ {
+			if !s.X(v.This) {
 				s.Jump(m)
-				s.Errorf(`expected %v of %q`, v[0].(int), v[1])
+				s.Errorf(`expected %v of %q`, v.N, v.This)
 				return false
 			}
 		}

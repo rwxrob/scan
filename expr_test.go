@@ -142,7 +142,7 @@ func ExampleX_to_Inclusive() {
 	s.Print()
 	// Output:
 	// U+0074 't' 1,6-6 (6-6)
-	// ['z'] not found anywhere in remaining buffer starting at U+0074 't' 1,6-6 (6-6)
+	// 'z' not found anywhere in remaining buffer starting at U+0074 't' 1,6-6 (6-6)
 }
 
 func ExampleX_range() {
@@ -175,7 +175,7 @@ func ExampleX_min() {
 	s.Print()
 	// Output:
 	// U+0073 's' 1,3-3 (3-3)
-	// expected at least 4 of 's' at U+0073 's' 1,3-3 (3-3)
+	// expected min 4 of 's' at U+0073 's' 1,3-3 (3-3)
 }
 
 func ExampleX_min_One() {
@@ -186,7 +186,7 @@ func ExampleX_min_One() {
 	s.Print()
 	// Output:
 	// U+0073 's' 1,3-3 (3-3)
-	// expected at least 1 of 'a' at U+0073 's' 1,3-3 (3-3)
+	// expected min 1 of 'a' at U+0073 's' 1,3-3 (3-3)
 }
 
 func ExampleX_first_Class_Functions() {
@@ -213,7 +213,7 @@ func ExampleX_first_Class_Functions() {
 
 func ExampleX_parse_Single() {
 	s := scan.New("some thing")
-	s.X(z.P{1, 's', 'o', "me"})
+	s.X(z.P{1, z.X{'s', 'o', "me"}})
 	s.Print()
 	fmt.Println(s.Tree.Root.Count)
 	s.Tree.Root.Print()
@@ -249,7 +249,7 @@ func ExampleX_parse_Nested_Simple() {
 
 func ExampleX_parse_Nested_with_Other() {
 	s := scan.New("some thing")
-	s.X(z.P{2, "some", ' ', z.P{3, "th"}})
+	s.X(z.P{2, z.X{"some", ' ', z.P{3, "th"}}})
 	s.Print()
 	fmt.Println(s.Tree.Root.Count)
 	s.Tree.Root.Print()
@@ -261,7 +261,7 @@ func ExampleX_parse_Nested_with_Other() {
 
 func ExampleX_parse_Nested_with_Two_Other() {
 	s := scan.New("some thing")
-	s.X(z.P{2, z.P{3, "some"}, ' ', z.P{3, "th"}})
+	s.X(z.P{2, z.X{z.P{3, "some"}, ' ', z.P{3, "th"}}})
 	s.Print()
 	fmt.Println(s.Tree.Root.Count)
 	s.Tree.Root.Print()
@@ -324,6 +324,29 @@ func ExampleX_parse_Nested_Complex() {
 	s.Print()
 	nodes := s.Tree.Root.Nodes()
 	fmt.Println(s.Tree.Root.Count, nodes[0].Count, nodes[1].Count)
+	s.Tree.Root.Print()
+
+	// Output:
+	// U+0020 ' ' 1,6-6 (6-6)
+	// 2 2 2
+	// {"T":1,"N":[{"T":2,"V":"go","N":[{"T":3,"V":"g"},{"T":3,"V":"o"}]},{"T":2,"V":"me","N":[{"T":3,"V":"m"},{"T":3,"V":"e"}]}]}
+}
+
+func ExampleX_parse_Nested_Complex_Revert() {
+
+	const WORD = 2
+	const CHAR = 3
+
+	ch := z.P{CHAR, z.R{'a', 'z'}}
+	word := z.P{WORD, z.M1{ch}}
+	ws := z.I{' ', '\t', '\r', '\n'}
+
+	s := scan.New("go me and you again")
+	//s.X(z.M0{"go"}, ' ', z.M0{z.X{word, ws}}, word)
+	s.X(z.M0{"go"}, ' ', z.M0{z.X{word, ws}}, word)
+	s.Print()
+	//nodes := s.Tree.Root.Nodes()
+	//fmt.Println(s.Tree.Root.Count, nodes[0].Count, nodes[1].Count)
 	s.Tree.Root.Print()
 
 	// Output:
