@@ -202,14 +202,20 @@ func (s *R) Scan() bool {
 	s.Cur.Next += ln
 	s.Cur.Pos.LineRune += 1
 	s.Cur.Len = ln
+	if r == tk.EOD {
+		return false
+	}
 	return true
 }
 
 // Any calls Scan n number of times stopping if end of data reached.
-func (s *R) Any(n int) {
+func (s *R) Any(n int) bool {
 	for i := 0; i < n; i++ {
-		s.Scan()
+		if !s.Scan() {
+			return false
+		}
 	}
+	return true
 }
 
 // Mark returns a copy of the current scanner cursor to preserve like
@@ -225,7 +231,13 @@ func (s *R) Mark() *Cur {
 // Jump replaces the internal cursor with a copy of the one passed
 // effectively repositioning the scanner's current position in the
 // buffered data.
-func (s *R) Jump(c *Cur) { nc := *c; s.Cur = &nc }
+func (s *R) Jump(c *Cur) {
+	if c == nil {
+		return
+	}
+	nc := *c
+	s.Cur = &nc
+}
 
 // Snap pushes a bookmark (as if taken with Mark) onto the Snapped
 // stack. Use Back to pop back to the last Snapped.

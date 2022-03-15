@@ -69,19 +69,18 @@ func (s *R) X(expr ...any) bool {
 
 	case z.X: // "expression" (each must match in order, advances) ------
 		m := s.Mark()
+		r := *s.Tree.Root
 		for _, i := range v {
 			if !s.X(i) {
 				s.Jump(m)
+				s.Tree.Root = &r
 				return false
 			}
 		}
 		return true
 
 	case z.A: // "any" (advances exactly N of any rune) -----------------
-		for i := 0; i < v[0]; i++ {
-			s.Scan()
-		}
-		return true
+		return s.Any(v[0])
 
 	case z.Y: // "yes" (positive look-ahead, no advance, ordered) -------
 		m := s.Mark()
@@ -106,8 +105,8 @@ func (s *R) X(expr ...any) bool {
 		return true
 
 	case z.I: // "in" (one of required, advances, ordered) --------------
+		m := s.Mark()
 		for _, i := range v {
-			m := s.Mark()
 			if s.X(i) {
 				return true
 			}
@@ -130,14 +129,16 @@ func (s *R) X(expr ...any) bool {
 
 	case z.T: // "to inclusive" (advances to match and includes) -------
 		m := s.Mark()
-		for s.Cur.Rune != tk.EOD {
+		for {
 			m := s.Mark()
 			if s.X(z.X(v)) {
 				s.Jump(m)
 				return true
 			}
 			s.Err.Pop()
-			s.Scan()
+			if !s.Scan() {
+				break
+			}
 		}
 		s.Jump(m)
 		s.Errorf("%q not found anywhere in remaining buffer starting", v)
@@ -145,26 +146,31 @@ func (s *R) X(expr ...any) bool {
 
 	case z.Ti: // "to" (advances to match and excludes) ------------------
 		m := s.Mark()
-		for s.Cur.Rune != tk.EOD {
+		for {
 			if s.X(z.X(v)) {
 				return true
 			}
 			s.Err.Pop()
-			s.Scan()
+			if !s.Scan() {
+				break
+			}
 		}
 		s.Jump(m)
 		s.Errorf("%q not found anywhere in remaining buffer starting", v)
 		return false
 
 	case z.R: // "range" (inclusive range between rune int values) ------
+		m := s.Mark()
 		if v[0] <= s.Cur.Rune && s.Cur.Rune <= v[1] {
 			s.Scan()
 			return true
 		}
+		s.Jump(m)
 		s.Errorf(`expected %q-%q`, v[0], v[1])
 		return false
 
 	case z.MM: // "min max" (minimum and maximum count of, advances) ----
+		m := s.Mark()
 		count := 0
 		for s.Cur.Rune != tk.EOD {
 			if !s.X(v[2]) {
@@ -176,10 +182,12 @@ func (s *R) X(expr ...any) bool {
 		if v[0].(int) <= count && count <= v[1].(int) {
 			return true
 		}
+		s.Jump(m)
 		s.Errorf(`expected %v-%v of %q`, v[0], v[1], v[2])
 		return false
 
 	case z.M: // "min" (minimum and maximum count of, advances) ---------
+		m := s.Mark()
 		count := 0
 		for s.Cur.Rune != tk.EOD {
 			if !s.X(v[1]) {
@@ -191,6 +199,7 @@ func (s *R) X(expr ...any) bool {
 		if v[0].(int) <= count {
 			return true
 		}
+		s.Jump(m)
 		s.Errorf(`expected at least %v of %q`, v[0], v[1])
 		return false
 
