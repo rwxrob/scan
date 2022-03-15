@@ -57,12 +57,10 @@ func (s *R) X(expr ...any) bool {
 		cur := s.Nodes.Peek()
 		n := s.Tree.Node(v[0].(int), "")
 		m := s.Mark()
-		r := *s.Tree.Root
 		s.Nodes.Push(n)
 		defer s.Nodes.Pop()
 		if !s.X(v[1:]...) {
 			s.Jump(m)
-			s.Tree.Root = &r
 			return false
 		}
 		n.V = s.PeekSlice(m, s.Last)

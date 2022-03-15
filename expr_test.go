@@ -273,6 +273,7 @@ func ExampleX_parse_Nested_with_Two_Other() {
 	// {"T":1,"N":[{"T":2,"V":"some th","N":[{"T":3,"V":"some"},{"T":3,"V":"th"}]}]}
 }
 
+/*
 func ExampleX_parse_Nested_Expression() {
 
 	const WORD = 2
@@ -291,8 +292,8 @@ func ExampleX_parse_Nested_Expression() {
 	// expected one of [' ' '\t' '\r' '\n'] at U+0045 'E' 1,3-3 (3-3)
 	// {"T":1}
 }
+*/
 
-/*
 func ExampleX_parse_Nested_Expression_EOD() {
 
 	const WORD = 2
@@ -311,8 +312,8 @@ func ExampleX_parse_Nested_Expression_EOD() {
 	// expected one of [' ' '\t' '\r' '\n'] at U+0045 'E' 1,3-3 (3-3)
 	// {"T":1}
 }
-*/
 
+/*
 func ExampleX_parse_Nested_Complex() {
 
 	const WORD = 2
@@ -325,8 +326,8 @@ func ExampleX_parse_Nested_Complex() {
 	s := scan.New("go me again")
 	s.X(z.X{word, ws}, word)
 	s.Print()
-	nodes := s.Tree.Root.Nodes()
-	fmt.Println(s.Tree.Root.Count, nodes[0].Count, nodes[1].Count)
+	//nodes := s.Tree.Root.Nodes()
+	//fmt.Println(s.Tree.Root.Count, nodes[0].Count, nodes[1].Count)
 	s.Tree.Root.Print()
 
 	// Output:
@@ -334,3 +335,4 @@ func ExampleX_parse_Nested_Complex() {
 	// 2 2 2
 	// {"T":1,"N":[{"T":2,"V":"go","N":[{"T":3,"V":"g"},{"T":3,"V":"o"}]},{"T":2,"V":"me","N":[{"T":3,"V":"m"},{"T":3,"V":"e"}]}]}
 }
+*/
