@@ -1,25 +1,38 @@
 package scan
 
 import (
+	"log"
+
 	z "github.com/rwxrob/scan/is"
 	"github.com/rwxrob/scan/tk"
+	"github.com/rwxrob/to"
 )
 
-// X is an expression language interpreter that will process any number
+// X is an moderately performant, easy to use, expression language
+// interpreter and rooted node tree parser that will process any number
 // of valid expressions for scanning, looking ahead, parsing, and
-// executing first-class functions. See the "is" and "tk" packages.
-// X will push an Error and immediately return if any error is
-// encountered. For simplicity, the interpreter uses functional
-// recursion in its implementation which might be undesirable in certain
-// exceptional cases where grammars produce unusually deep nesting. This
-// should not be a concern for most applications.
+// executing first-class functions. The resulting parse tree, marshaled
+// as JSON, is far more useful than the output of regular expressions.
+// It's purpose is to facilitate rapid grammar creation, grammar
+// transcription, and easy code generation for more optimized parsers
+// when needed. Emphasis has been placed on speed of development over
+// raw code execution. As such the interpreter and parser employ
+// functional recursion and cached node-tree states which might be
+// undesirable in certain exceptional cases where grammars produce
+// unusually deep nesting. This should not be a concern for most
+// applications where scan.X performance is more than sufficient ---
+// particularly for Go applications that replace casual shell scripts.
+// See the "is" and "tk" packages for the language specification. X will
+// push an Error and immediately return if any error is encountered.
 func (s *R) X(expr ...any) bool {
 
 	// same as z.X if more than one
 	if len(expr) > 1 {
 		m := s.Mark()
+		save := s.Tree.Root.Copy()
 		for _, r := range expr {
 			if !s.X(r) {
+				s.Tree.Root = save
 				s.Jump(m)
 				return false
 			}
@@ -53,27 +66,15 @@ func (s *R) X(expr ...any) bool {
 		}
 		return true
 
-	case z.P: // "parse" (parse tree node) ------------------------------
-		cur := s.Nodes.Peek()
-		n := s.Tree.Node(v.T, "")
-		m := s.Mark()
-		s.Nodes.Push(n)
-		defer s.Nodes.Pop()
-		if !s.X(v.This) {
-			s.Jump(m)
-			return false
-		}
-		n.V = s.PeekSlice(m, s.Last)
-		cur.Append(n)
-		return true
-
 	case z.X: // "expression" (each must match in order, advances) ------
 		m := s.Mark()
-		r := *s.Tree.Root
+		log.Print(v)
+
+		save := s.Tree.Root.Copy()
 		for _, i := range v {
 			if !s.X(i) {
+				s.Tree.Root = save
 				s.Jump(m)
-				s.Tree.Root = &r
 				return false
 			}
 		}
@@ -85,7 +86,6 @@ func (s *R) X(expr ...any) bool {
 	case z.Y: // "yes" (positive look-ahead, no advance, ordered) -------
 		m := s.Mark()
 		if s.X(z.X(v)) {
-			// FIXME expand and check for illegal z.P
 			s.Jump(m)
 			return true
 		}
@@ -96,8 +96,7 @@ func (s *R) X(expr ...any) bool {
 		m := s.Mark()
 		for _, i := range v {
 			if s.X(i) {
-				// FIXME expand and check for illegal z.P
-				s.Errorf(`unexpected %q`, i)
+				s.Errorf(`unexpected %v`, to.Human(i))
 				s.Jump(m)
 				return false
 			}
@@ -108,6 +107,7 @@ func (s *R) X(expr ...any) bool {
 
 	case z.I: // "in" (one of required, advances, ordered) --------------
 		m := s.Mark()
+		save := s.Tree.Root.Copy()
 		for _, i := range v {
 			if s.X(i) {
 				return true
@@ -115,7 +115,8 @@ func (s *R) X(expr ...any) bool {
 			s.Err.Pop()
 			s.Jump(m)
 		}
-		s.Errorf(`expected one of %q`, v)
+		s.Tree.Root = save
+		s.Errorf(`expected %v`, to.Human(v))
 		return false
 
 	case z.O: // "optional" (if any advances, not required) -------------
@@ -133,32 +134,36 @@ func (s *R) X(expr ...any) bool {
 		m := s.Mark()
 		for {
 			m := s.Mark()
+			save := s.Tree.Root.Copy()
 			if s.X(v.This) {
 				s.Jump(m)
 				return true
 			}
+			s.Tree.Root = save
 			s.Err.Pop()
 			if !s.Scan() {
 				break
 			}
 		}
 		s.Jump(m)
-		s.Errorf("%v not found anywhere in remaining buffer starting", v)
+		s.Errorf("%v not found", v)
 		return false
 
 	case z.Ti: // "to" (advances to match and excludes) ------------------
 		m := s.Mark()
 		for {
+			save := s.Tree.Root.Copy()
 			if s.X(v.This) {
 				return true
 			}
+			s.Tree.Root = save
 			s.Err.Pop()
 			if !s.Scan() {
 				break
 			}
 		}
 		s.Jump(m)
-		s.Errorf("%v not found anywhere in remaining buffer starting", v)
+		s.Errorf("%v not found", v)
 		return false
 
 	case z.R: // "range" (inclusive range between rune int values) ------
@@ -168,14 +173,16 @@ func (s *R) X(expr ...any) bool {
 			return true
 		}
 		s.Jump(m)
-		s.Errorf(`expected %q-%q`, v.First, v.Last)
+		s.Errorf(`expected %v`, v)
 		return false
 
 	case z.MM: // "min max" (minimum and maximum count of, advances) ----
 		m := s.Mark()
 		count := 0
 		for s.Cur.Rune != tk.EOD {
+			save := s.Tree.Root.Copy()
 			if !s.X(v.This) {
+				s.Tree.Root = save
 				s.Err.Pop()
 				break
 			}
@@ -185,14 +192,19 @@ func (s *R) X(expr ...any) bool {
 			return true
 		}
 		s.Jump(m)
-		s.Errorf(`expected %v-%v of %q`, v.Min, v.Max, v.This)
+		s.Errorf(`expected %v`, to.Human(v))
 		return false
 
 	case z.M: // "min" (minimum and maximum count of, advances) ---------
 		m := s.Mark()
+		save := s.Tree.Root.Copy()
 		count := 0
+		// activate pushing of node tree states (not needed otherwise)
 		for s.Cur.Rune != tk.EOD {
+			save := s.Tree.Root.Copy()
 			if !s.X(v.This) {
+				s.Tree.Root = save
+				// if the last s.Err was a z.P then pop the state
 				s.Err.Pop()
 				break
 			}
@@ -201,8 +213,9 @@ func (s *R) X(expr ...any) bool {
 		if v.Min <= count {
 			return true
 		}
+		s.Tree.Root = save
 		s.Jump(m)
-		s.Errorf(`expected %v`, v)
+		s.Errorf(`expected %v`, to.Human(v))
 		return false
 
 	case z.M0: // "min zero" (shorthand for z.M{0,This}) -----------------
@@ -216,17 +229,31 @@ func (s *R) X(expr ...any) bool {
 		for i := 0; i < v.N; i++ {
 			if !s.X(v.This) {
 				s.Jump(m)
-				s.Errorf(`expected %v of %q`, v.N, v.This)
+				s.Errorf(`expected %v`, to.Human(v))
 				return false
 			}
 		}
 		return true
 
-	case func(s *R) bool:
+	case func(s *R) bool: // first-class function hook (does whatever) --
 		return v(s)
 
+	case z.P: // "parse" (parse tree node) ------------------------------
+		cur := s.Nodes.Peek()
+		n := s.Tree.Node(v.T, "")
+		m := s.Mark()
+		s.Nodes.Push(n)
+		defer s.Nodes.Pop()
+		if !s.X(v.This) {
+			s.Jump(m)
+			return false
+		}
+		n.V = s.PeekSlice(m, s.Last)
+		cur.Append(n)
+		return true
+
 	default: // ---------------------------------------------------------
-		s.Errorf(`unsupported expression type %T`, v)
+		s.Errorf(`unsupported %T`, v)
 		return false
 
 	} // end switch
