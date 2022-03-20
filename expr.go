@@ -71,6 +71,9 @@ func (s *R) X(expr ...any) bool {
 		}
 		return true
 
+	case func(s *R) bool: // first-class function hook (does whatever) --
+		return v(s)
+
 	case z.X: // "expression" (each must match in order, advances) ------
 		m := s.Mark()
 		save := s.Tree.Root.Copy()
@@ -227,9 +230,6 @@ func (s *R) X(expr ...any) bool {
 			}
 		}
 		return true
-
-	case func(s *R) bool: // first-class function hook (does whatever) --
-		return v(s)
 
 	case z.P: // "parse" (parse tree node) ------------------------------
 		cur := s.Nodes.Peek()
