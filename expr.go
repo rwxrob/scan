@@ -104,7 +104,7 @@ func (s *R) X(expr ...any) bool {
 				s.Jump(m)
 				return false
 			}
-			s.Err.Pop()
+			s.ClearLastError()
 		}
 		s.Jump(m)
 		return true
@@ -116,7 +116,7 @@ func (s *R) X(expr ...any) bool {
 			if s.X(i) {
 				return true
 			}
-			s.Err.Pop()
+			s.ClearLastError()
 			s.Jump(m)
 		}
 		s.Tree.Root = save
@@ -138,13 +138,11 @@ func (s *R) X(expr ...any) bool {
 		m := s.Mark()
 		for {
 			m := s.Mark()
-			save := s.Tree.Root.Copy()
 			if s.X(v.This) {
 				s.Jump(m)
 				return true
 			}
-			s.Tree.Root = save
-			s.Err.Pop()
+			s.ClearLastError()
 			if !s.Scan() {
 				break
 			}
@@ -156,12 +154,10 @@ func (s *R) X(expr ...any) bool {
 	case z.Ti: // "to" (advances to match and excludes) ------------------
 		m := s.Mark()
 		for {
-			save := s.Tree.Root.Copy()
 			if s.X(v.This) {
 				return true
 			}
-			s.Tree.Root = save
-			s.Err.Pop()
+			s.ClearLastError()
 			if !s.Scan() {
 				break
 			}
@@ -184,10 +180,8 @@ func (s *R) X(expr ...any) bool {
 		m := s.Mark()
 		count := 0
 		for s.Cur.Rune != tk.EOD {
-			save := s.Tree.Root.Copy()
 			if !s.X(v.This) {
-				s.Tree.Root = save
-				s.Err.Pop()
+				s.ClearLastError()
 				break
 			}
 			count++
