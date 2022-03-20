@@ -59,7 +59,7 @@ func ExampleR_Init_error() {
 	s.Init([]rune{'f', 'o', 'o'})
 	s.Print()
 	// Output:
-	// cannot buffer type: []int32 at U+0000 '\x00' 1,1-1 (1-1)
+	// buffer: unsupported type: []int32 at U+0000 '\x00' 1,1-1 (1-1)
 }
 
 func ExampleR_marshaling() {

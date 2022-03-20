@@ -82,7 +82,7 @@ func ExampleX_parse_Failure() {
 	s.Tree.Root.Print()
 
 	// Output:
-	// expected z.I{' ','\t','\r','\n'} at U+0045 'E' 1,3-3 (3-3)
+	// scan.x: expected z.I{' ','\t','\r','\n'} at U+0045 'E' 1,3-3 (3-3)
 	// {"T":1}
 }
 
@@ -102,7 +102,7 @@ func ExampleX_parse_Nested_EOD() {
 	s.Tree.Root.Print()
 
 	// Output:
-	// expected z.I{' ','\t','\r','\n'} at <EOD>
+	// scan.x: expected z.I{' ','\t','\r','\n'} at <EOD>
 	// {"T":1}
 }
 

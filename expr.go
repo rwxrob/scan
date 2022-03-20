@@ -51,7 +51,7 @@ func (s *R) X(expr ...any) bool {
 			s.Cur.NewLine()
 			return true
 		}
-		s.Errorf(`expected %q`, v)
+		s.Errorf(v, `scan.x: expected %q`, v)
 		return false
 
 	case string: // (just a sequence of runes, advances) ----------------
@@ -59,7 +59,7 @@ func (s *R) X(expr ...any) bool {
 		for _, i := range []rune(v) {
 			if s.Cur.Rune != i {
 				s.Jump(m)
-				s.Errorf(`expected %q`, v)
+				s.Errorf(v, `scan.x: expected %q`, v)
 				return false
 			}
 			s.Scan()
@@ -96,7 +96,7 @@ func (s *R) X(expr ...any) bool {
 		m := s.Mark()
 		for _, i := range v {
 			if s.X(i) {
-				s.Errorf(`unexpected %v`, to.Human(i))
+				s.Errorf(v, `scan.x: unexpected %v`, to.Human(i))
 				s.Jump(m)
 				return false
 			}
@@ -116,7 +116,7 @@ func (s *R) X(expr ...any) bool {
 			s.Jump(m)
 		}
 		s.Tree.Root = save
-		s.Errorf(`expected %v`, to.Human(v))
+		s.Errorf(v, `scan.x: expected %v`, to.Human(v))
 		return false
 
 	case z.O: // "optional" (if any advances, not required) -------------
@@ -146,7 +146,7 @@ func (s *R) X(expr ...any) bool {
 			}
 		}
 		s.Jump(m)
-		s.Errorf("%v not found", v)
+		s.Errorf(v, "scan.x: %v not found", v)
 		return false
 
 	case z.Ti: // "to" (advances to match and excludes) ------------------
@@ -163,7 +163,7 @@ func (s *R) X(expr ...any) bool {
 			}
 		}
 		s.Jump(m)
-		s.Errorf("%v not found", v)
+		s.Errorf(v, "scan.x: %v not found", v)
 		return false
 
 	case z.R: // "range" (inclusive range between rune int values) ------
@@ -173,7 +173,7 @@ func (s *R) X(expr ...any) bool {
 			return true
 		}
 		s.Jump(m)
-		s.Errorf(`expected %v`, v)
+		s.Errorf(v, `scan.x: expected %v`, v)
 		return false
 
 	case z.MM: // "min max" (minimum and maximum count of, advances) ----
@@ -192,20 +192,16 @@ func (s *R) X(expr ...any) bool {
 			return true
 		}
 		s.Jump(m)
-		s.Errorf(`expected %v`, to.Human(v))
+		s.Errorf(v, `scan.x: expected %v`, to.Human(v))
 		return false
 
 	case z.M: // "min" (minimum and maximum count of, advances) ---------
 		m := s.Mark()
 		save := s.Tree.Root.Copy()
 		count := 0
-		// activate pushing of node tree states (not needed otherwise)
 		for s.Cur.Rune != tk.EOD {
-			save := s.Tree.Root.Copy()
 			if !s.X(v.This) {
-				s.Tree.Root = save
-				// if the last s.Err was a z.P then pop the state
-				s.Err.Pop()
+				s.ClearLastError()
 				break
 			}
 			count++
@@ -215,7 +211,7 @@ func (s *R) X(expr ...any) bool {
 		}
 		s.Tree.Root = save
 		s.Jump(m)
-		s.Errorf(`expected %v`, to.Human(v))
+		s.Errorf(v, `scan.x: expected %v`, to.Human(v))
 		return false
 
 	case z.M0: // "min zero" (shorthand for z.M{0,This}) -----------------
@@ -229,7 +225,7 @@ func (s *R) X(expr ...any) bool {
 		for i := 0; i < v.N; i++ {
 			if !s.X(v.This) {
 				s.Jump(m)
-				s.Errorf(`expected %v`, to.Human(v))
+				s.Errorf(v, `scan.x: expected %v`, to.Human(v))
 				return false
 			}
 		}
@@ -253,7 +249,7 @@ func (s *R) X(expr ...any) bool {
 		return true
 
 	default: // ---------------------------------------------------------
-		s.Errorf(`unsupported %T`, v)
+		s.Errorf(v, `scan.x: unsupported %T`, v)
 		return false
 
 	} // end switch

@@ -17,7 +17,7 @@ func ExampleX_rune() {
 	s.Print()
 	// Output:
 	// U+006F 'o' 1,2-2 (2-2)
-	// expected '\t' at U+006F 'o' 1,2-2 (2-2)
+	// scan.x: expected '\t' at U+006F 'o' 1,2-2 (2-2)
 }
 
 func ExampleX_rune_Any() {
@@ -45,7 +45,7 @@ func ExampleX_string() {
 	s.Print()
 	// Output:
 	// U+006D 'm' 1,3-3 (3-3)
-	// expected "M" at U+006D 'm' 1,3-3 (3-3)
+	// scan.x: expected "M" at U+006D 'm' 1,3-3 (3-3)
 }
 
 func ExampleX_sequence() {
@@ -56,7 +56,7 @@ func ExampleX_sequence() {
 	s.Print()
 	// Output:
 	// U+0065 'e' 1,4-4 (4-4)
-	// expected '\t' at U+0020 ' ' 1,5-5 (5-5)
+	// scan.x: expected '\t' at U+0020 ' ' 1,5-5 (5-5)
 }
 
 func ExampleX_any() {
@@ -81,8 +81,8 @@ func ExampleX_positive_Lookahead() {
 	s.Print()
 	// Output:
 	// U+0073 's' 1,1-1 (1-1)
-	// expected 'O' at U+006F 'o' 1,2-2 (2-2)
-	// expected 'O' at U+0073 's' 1,1-1 (1-1)
+	// scan.x: expected 'O' at U+006F 'o' 1,2-2 (2-2)
+	// scan.x: expected 'O' at U+0073 's' 1,1-1 (1-1)
 }
 
 func ExampleX_negative_Lookahead() {
@@ -93,7 +93,7 @@ func ExampleX_negative_Lookahead() {
 	s.Print()
 	// Output:
 	// U+0073 's' 1,1-1 (1-1)
-	// unexpected 's' at U+006F 'o' 1,2-2 (2-2)
+	// scan.x: unexpected 's' at U+006F 'o' 1,2-2 (2-2)
 }
 
 func ExampleX_in() {
@@ -105,7 +105,7 @@ func ExampleX_in() {
 	s.Print()
 	// Output:
 	// U+006D 'm' 1,3-3 (3-3)
-	// expected z.I{'z','q'} at U+006D 'm' 1,3-3 (3-3)
+	// scan.x: expected z.I{'z','q'} at U+006D 'm' 1,3-3 (3-3)
 }
 
 func ExampleX_optional() {
@@ -127,7 +127,7 @@ func ExampleX_to() {
 	s.Print()
 	// Output:
 	// U+0020 ' ' 1,5-5 (5-5)
-	// z.T{'z'} not found at U+0020 ' ' 1,5-5 (5-5)
+	// scan.x: z.T{'z'} not found at U+0020 ' ' 1,5-5 (5-5)
 }
 
 func ExampleX_to_Inclusive() {
@@ -138,7 +138,7 @@ func ExampleX_to_Inclusive() {
 	s.Print()
 	// Output:
 	// U+0074 't' 1,6-6 (6-6)
-	// z.Ti{'z'} not found at U+0074 't' 1,6-6 (6-6)
+	// scan.x: z.Ti{'z'} not found at U+0074 't' 1,6-6 (6-6)
 }
 
 func ExampleX_range() {
@@ -149,7 +149,7 @@ func ExampleX_range() {
 	s.Print()
 	// Output:
 	// U+006F 'o' 1,2-2 (2-2)
-	// expected z.R{'A','Z'} at U+006F 'o' 1,2-2 (2-2)
+	// scan.x: expected z.R{'A','Z'} at U+006F 'o' 1,2-2 (2-2)
 }
 
 func ExampleX_min_Max() {
@@ -160,7 +160,7 @@ func ExampleX_min_Max() {
 	s.Print()
 	// Output:
 	// U+0073 's' 1,3-3 (3-3)
-	// expected z.MM{4,6,'s'} at U+0073 's' 1,3-3 (3-3)
+	// scan.x: expected z.MM{4,6,'s'} at U+0073 's' 1,3-3 (3-3)
 }
 
 func ExampleX_min() {
@@ -171,7 +171,7 @@ func ExampleX_min() {
 	s.Print()
 	// Output:
 	// U+0073 's' 1,3-3 (3-3)
-	// expected z.M{4,'s'} at U+0073 's' 1,3-3 (3-3)
+	// scan.x: expected z.M{4,'s'} at U+0073 's' 1,3-3 (3-3)
 }
 
 func ExampleX_min_One() {
@@ -182,7 +182,7 @@ func ExampleX_min_One() {
 	s.Print()
 	// Output:
 	// U+0073 's' 1,3-3 (3-3)
-	// expected z.M{1,'a'} at U+0073 's' 1,3-3 (3-3)
+	// scan.x: expected z.M{1,'a'} at U+0073 's' 1,3-3 (3-3)
 }
 
 func ExampleX_min_Zero() {
@@ -204,7 +204,7 @@ func ExampleX_count() {
 	s.Print()
 	// Output:
 	// U+006F 'o' 1,4-4 (4-4)
-	// expected z.C{2,'o'} at U+006F 'o' 1,4-4 (4-4)
+	// scan.x: expected z.C{2,'o'} at U+006F 'o' 1,4-4 (4-4)
 }
 
 func ExampleX_new_Line() {

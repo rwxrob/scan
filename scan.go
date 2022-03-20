@@ -14,6 +14,7 @@ import (
 	"log"
 	"unicode/utf8"
 
+	z "github.com/rwxrob/scan/is"
 	"github.com/rwxrob/scan/tk"
 	"github.com/rwxrob/structs/qstack"
 	"github.com/rwxrob/structs/tree"
@@ -27,8 +28,9 @@ const (
 
 // Error captures an error at a specific location.
 type Error struct {
-	Msg string
-	At  *Cur
+	Msg  string
+	At   *Cur
+	What any
 }
 
 // String fulfills the fmt.Stringer interface.
@@ -115,7 +117,7 @@ func (s *R) Init(i any) {
 	if ln == 0 {
 		r = tk.EOD
 		s.State |= EOD
-		s.Errorf("failed to scan first rune")
+		s.Errorf(nil, "init: failed to scan first rune")
 		return
 	}
 
@@ -127,14 +129,23 @@ func (s *R) Init(i any) {
 
 // Error pushes the message from the passed error onto the Err stack.
 func (s *R) Error(err error) {
-	s.Err.Push(&Error{fmt.Sprintf(`%v`, err), s.Mark()})
+	s.Err.Push(&Error{fmt.Sprintf(`%v`, err), s.Mark(), nil})
 }
 
 // Errorf pushes a new formatted error on Err stack. The last error
 // is always displayed with the scan.R is marshaled/printed as a string.
-func (s *R) Errorf(tpl string, i ...any) {
+// The first argument may be the context (item) that caused the error.
+func (s *R) Errorf(t any, tpl string, i ...any) {
 	msg := fmt.Sprintf(tpl, i...)
-	s.Err.Push(&Error{msg, s.Mark()})
+	s.Err.Push(&Error{msg, s.Mark(), t})
+}
+
+func (s *R) ClearLastError() {
+	err := s.Err.Pop()
+	if _, is := err.What.(z.P); is {
+		n := s.Nodes.Pop()
+		n.Cut()
+	}
 }
 
 // String prints the last error and position.
@@ -165,12 +176,12 @@ func (s *R) buffer(i any) {
 	case []byte:
 		s.Buf = v
 	default:
-		s.Errorf("cannot buffer type: %T", i)
+		s.Errorf(v, "buffer: unsupported type: %T", i)
 		return
 	}
 	s.BufLen = len(s.Buf)
 	if s.BufLen == 0 {
-		s.Errorf("scanner: no input")
+		s.Errorf(nil, "buffer: no input")
 		return
 	}
 }
