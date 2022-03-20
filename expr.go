@@ -4,7 +4,6 @@ import (
 	"log"
 
 	z "github.com/rwxrob/scan/is"
-	"github.com/rwxrob/scan/tk"
 	"github.com/rwxrob/to"
 )
 
@@ -49,11 +48,11 @@ func (s *R) X(expr ...any) bool {
 	switch v := expr[0].(type) {
 
 	case rune: // -------------------------------------------------------
-		if s.Cur.Rune == v || v == tk.ANY {
+		if s.Cur.Rune == v || v == ANY {
 			s.Scan()
 			return true
 		}
-		if v == tk.NL {
+		if v == NL {
 			s.Cur.NewLine()
 			return true
 		}
@@ -179,7 +178,7 @@ func (s *R) X(expr ...any) bool {
 	case z.MM: // "min max" (minimum and maximum count of, advances) ----
 		m := s.Mark()
 		count := 0
-		for s.Cur.Rune != tk.EOD {
+		for s.Cur.Rune != EOD {
 			if !s.X(v.This) {
 				s.ClearLastError()
 				break
@@ -197,7 +196,7 @@ func (s *R) X(expr ...any) bool {
 		m := s.Mark()
 		save := s.Tree.Root.Copy()
 		count := 0
-		for s.Cur.Rune != tk.EOD {
+		for s.Cur.Rune != EOD {
 			if !s.X(v.This) {
 				s.ClearLastError()
 				break

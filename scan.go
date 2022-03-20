@@ -15,13 +15,25 @@ import (
 	"unicode/utf8"
 
 	z "github.com/rwxrob/scan/is"
-	"github.com/rwxrob/scan/tk"
 	"github.com/rwxrob/structs/qstack"
 	"github.com/rwxrob/structs/tree"
 )
 
+const ()
+
 const (
-	EOD = 1 << (iota + 1) // end of data has been reached
+
+	// EOD is a special value that is returned when the end of data is
+	// reached enabling functional parser functions to look for it reliably
+	// no matter what is being parsed. Since rune is alias for int32 and
+	// Unicode (currently) ends at \U+FFFD we are safe to use the largest
+	// possible valid rune value.
+	EOD rune = 1<<31 - (iota + 1) // end of data
+	ANY                           // will scan any valid rune
+	NL                            // triggers new line in scan.R.Cur
+
+	// Scanner states
+	Done = 1 << (iota + 1) // end of data has been reached
 )
 
 // ---------------------------- scan.Error ----------------------------
@@ -118,8 +130,8 @@ func (s *R) Init(i any) {
 
 	r, ln := utf8.DecodeRune(s.Buf)
 	if ln == 0 {
-		r = tk.EOD
-		s.State |= EOD
+		r = EOD
+		s.State |= Done
 		s.Errorf(nil, "init: failed to scan first rune")
 		return
 	}
@@ -201,13 +213,13 @@ func (s *R) buffer(i any) {
 }
 
 // Scan decodes the next rune and advances the cursor by one.  If the
-// scan exceeds BufLen then Cur.Rune is set to tk.EOD, EOD State
+// scan exceeds BufLen then Cur.Rune is set to EOD, Done State
 // is set, and Scan returns false.
 func (s *R) Scan() bool {
 	s.Last = s.Mark()
 	if s.Cur.Next == s.BufLen {
-		s.Cur.Rune = tk.EOD
-		s.State |= EOD
+		s.Cur.Rune = EOD
+		s.State |= Done
 		return false
 	}
 	ln := 1
@@ -219,15 +231,15 @@ func (s *R) Scan() bool {
 		s.Cur.Byte = s.Cur.Next
 		s.Cur.Pos.LineByte += s.Cur.Len
 	} else {
-		r = tk.EOD
-		s.State |= EOD
+		r = EOD
+		s.State |= Done
 	}
 	s.Cur.Rune = r
 	s.Cur.Pos.Rune += 1
 	s.Cur.Next += ln
 	s.Cur.Pos.LineRune += 1
 	s.Cur.Len = ln
-	if r == tk.EOD {
+	if r == EOD {
 		return false
 	}
 	return true

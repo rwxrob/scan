@@ -6,7 +6,6 @@ import (
 
 	"github.com/rwxrob/scan"
 	z "github.com/rwxrob/scan/is"
-	"github.com/rwxrob/scan/tk"
 )
 
 func ExampleX_rune() {
@@ -22,7 +21,7 @@ func ExampleX_rune() {
 
 func ExampleX_rune_Any() {
 	s := scan.New("some thing")
-	s.X(tk.ANY)
+	s.X(scan.ANY)
 	s.Print()
 	// Output:
 	// U+006F 'o' 1,2-2 (2-2)
@@ -30,7 +29,7 @@ func ExampleX_rune_Any() {
 
 func ExampleX_rune_NL() {
 	s := scan.New("some\nthing")
-	s.X("some", '\n', tk.NL, "th")
+	s.X("some", '\n', scan.NL, "th")
 	s.Print()
 	// Output:
 	// U+0069 'i' 2,3-3 (8-8)
@@ -208,7 +207,7 @@ func ExampleX_count() {
 }
 
 func ExampleX_new_Line() {
-	eol := z.X{z.I{'\n', "\r\n", '\r'}, tk.NL}
+	eol := z.X{z.I{'\n', "\r\n", '\r'}, scan.NL}
 	s := scan.New("some\nth\r\ning\rhere")
 	s.X("some", eol, "th", eol, "ing", eol, 'h')
 	s.Print()
@@ -232,7 +231,7 @@ func ExampleX_first_Class_Functions() {
 	// ws := z.X(' ', '\t', '\r', '\n')
 
 	s := scan.New("some\nthing")
-	s.X(scanSome, logit, ws, tk.NL, scanTh)
+	s.X(scanSome, logit, ws, scan.NL, scanTh)
 	s.Print()
 	// Output:
 	// U+000A '\n' 1,5-5 (5-5)

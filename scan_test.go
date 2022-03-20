@@ -85,13 +85,13 @@ func ExampleR_marshaling() {
 
 func ExampleR_Scan() {
 	s := scan.New("so")
-	fmt.Println(s.State == s.State|scan.EOD)
+	fmt.Println(s.State == s.State|scan.Done)
 	s.Print()
 	s.Scan()
 	s.Print()
 	s.Scan()
 	s.Print()
-	fmt.Println(s.State == s.State|scan.EOD)
+	fmt.Println(s.State == s.State|scan.Done)
 	// Output:
 	// false
 	// U+0073 's' 1,1-1 (1-1)

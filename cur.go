@@ -6,8 +6,6 @@ package scan
 import (
 	"fmt"
 	"log"
-
-	"github.com/rwxrob/scan/tk"
 )
 
 // Pos contains the user-land position for reporting back when there is
@@ -33,7 +31,7 @@ func (p *Pos) NewLine() {
 // Cur is a cursor structure that points to specific position within
 // buffered data. An internal Cur is used within the Parser. Cursors
 // are returned by methods of Parser implementations.  Cursors must be
-// set to tk.EOD and have Len set to 0 if the Parser is asked to read
+// set to EOD and have Len set to 0 if the Parser is asked to read
 // beyond the end of the data.  Manipulating the values of a Curs
 // directly is strongly discouraged. Instead use scan.R.Mark instead to
 // create a new *Cur at a given location.
@@ -59,7 +57,7 @@ func (c *Cur) String() string {
 	if c == nil {
 		return "<nil>"
 	}
-	if c.Rune == tk.EOD {
+	if c.Rune == EOD {
 		return "<EOD>"
 	}
 	s := fmt.Sprintf(`%U %q %v,%v-%v (%v-%v)`,
