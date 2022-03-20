@@ -78,6 +78,8 @@ type R struct {
 	// expression authors can make use of it for their own parsing
 	// possibilities.
 	Nodes *qstack.QS[*tree.Node[string]]
+
+	tracex bool
 }
 
 // New creates a new scan.R instance and initializes it pushing an error
@@ -100,6 +102,7 @@ func (s *R) Init(i any) {
 	s.Tree = tree.New[string]()
 	s.Nodes = qstack.New[*tree.Node[string]]()
 	s.Nodes.Push(s.Tree.Root)
+	s.tracex = false
 
 	s.Cur = new(Cur)
 	s.Cur.Pos = Pos{}
@@ -126,6 +129,17 @@ func (s *R) Init(i any) {
 	s.Cur.Next = ln
 
 }
+
+// TraceX activates scan.X interpreter tracing providing crucial
+// visibility for complex expression debugging. Scan.X expressions are
+// designed for rapid development of complex grammars and expressions.
+// Later, when and if needed, those expressions that can be used to
+// generate highly optimized parsers that do not depend on the scan.X
+// interpreter.
+func (s *R) TraceX() { s.tracex = true }
+
+// NoTraceX disables tracing of scan.X expressions. See TraceX.
+func (s *R) NoTraceX() { s.tracex = false }
 
 // Error pushes the message from the passed error onto the Err stack.
 func (s *R) Error(err error) {

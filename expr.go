@@ -40,6 +40,12 @@ func (s *R) X(expr ...any) bool {
 		return true
 	}
 
+	if s.tracex {
+		s.Log()
+		log.Print(to.Human(expr[0]))
+		log.Print("---------------")
+	}
+
 	switch v := expr[0].(type) {
 
 	case rune: // -------------------------------------------------------
@@ -68,8 +74,6 @@ func (s *R) X(expr ...any) bool {
 
 	case z.X: // "expression" (each must match in order, advances) ------
 		m := s.Mark()
-		log.Print(v)
-
 		save := s.Tree.Root.Copy()
 		for _, i := range v {
 			if !s.X(i) {

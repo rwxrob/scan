@@ -114,17 +114,16 @@ func ExampleX_parse_Nested_Complex() {
 	ch := z.P{CHAR, z.R{'a', 'z'}}
 	word := z.P{WORD, z.M1{ch}}
 	ws := z.I{' ', '\t', '\r', '\n'}
+	phrase := z.X{z.M0{z.X{word, ws}}, word}
 
 	s := scan.New("go me again")
-	s.X(z.X{word, ws})
+	//s.TraceX()
+	s.X(phrase)
 	s.Print()
-	//nodes := s.Tree.Root.Nodes()
-	//fmt.Println(s.Tree.Root.Count, nodes[0].Count, nodes[1].Count)
 	s.Tree.Root.Print()
 
 	// Output:
-	// U+0020 ' ' 1,6-6 (6-6)
-	// 2 2 2
+	// <EOD>
 	// {"T":1,"N":[{"T":2,"V":"go","N":[{"T":3,"V":"g"},{"T":3,"V":"o"}]},{"T":2,"V":"me","N":[{"T":3,"V":"m"},{"T":3,"V":"e"}]}]}
 }
 
