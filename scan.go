@@ -84,6 +84,9 @@ type R struct {
 	// Tree contains the rooted node tree created by z.P scan.X expressions.
 	Tree *tree.E[string]
 
+	// Root is simply a convenience pointing to Tree.Root (on Init)
+	Root *tree.Node[string]
+
 	// Nodes is used to construct what ultimately becomes the Tree.Root
 	// after all z.P scan.X parsing completes. Init pushes Tree.Root onto
 	// it to begin. It is public so that first-class function scan.X
@@ -112,6 +115,7 @@ func (s *R) Init(i any) {
 	s.Snapped = qstack.New[*Cur]()
 	s.Err = qstack.New[*Error]()
 	s.Tree = tree.New[string]()
+	s.Root = s.Tree.Root
 	s.Nodes = qstack.New[*tree.Node[string]]()
 	s.Nodes.Push(s.Tree.Root)
 	s.tracex = false
