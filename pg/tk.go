@@ -50,6 +50,7 @@ const (
 	REPLACE   = 0xFFFD
 	MAXRUNE   = 0x0010FFFF
 	ENDOFDATA = 134217727 // largest int32
+	EOD       = 134217727 // largest int32
 	MAXASCII  = 0x007F
 	MAXLATIN  = 0x00FF
 	RARROWF   = "=>"
