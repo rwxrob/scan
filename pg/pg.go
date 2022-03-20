@@ -10,4 +10,10 @@ import (
 var WS = z.I{SP, TAB, CR, LF}
 var EndLine = z.I{LF, CRLF, CR}
 
-func UGraphic(s *scan.R) bool { return unicode.IsGraphic(s.Cur.Rune) }
+func UGraphic(s *scan.R) bool {
+	if unicode.IsGraphic(s.Cur.Rune) {
+		s.Scan()
+		return true
+	}
+	return false
+}
