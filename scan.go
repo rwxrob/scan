@@ -168,6 +168,9 @@ func (s *R) Errorf(t any, tpl string, i ...any) {
 
 func (s *R) ClearLastError() {
 	err := s.Err.Pop()
+	if err == nil || err.What == nil {
+		return
+	}
 	if _, is := err.What.(z.P); is {
 		n := s.Nodes.Pop()
 		n.Cut()
