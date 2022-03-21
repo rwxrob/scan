@@ -22,6 +22,8 @@ package z
 import (
 	"fmt"
 	"strings"
+
+	"github.com/rwxrob/to"
 )
 
 // P ("parse") is a named sequence of expressions that will be parsed
@@ -40,19 +42,8 @@ type P struct {
 	This any
 }
 
-func quote(a any) string {
-	switch v := a.(type) {
-	case rune:
-		return fmt.Sprintf("%q", v)
-	case string:
-		return fmt.Sprintf("%q", v)
-	default:
-		return fmt.Sprintf("%v", v)
-	}
-}
-
 func (p P) String() string {
-	return fmt.Sprintf(`z.P{%v,%v}`, p.T, quote(p.This))
+	return fmt.Sprintf(`z.P{%v,%v}`, p.T, to.Human(p.This))
 }
 
 // X ("expression") is a sequence of expressions used for grouping.  If
@@ -63,7 +54,7 @@ func (x X) String() string {
 	buf := `z.X{`
 	a := []string{}
 	for _, v := range x {
-		a = append(a, quote(v))
+		a = append(a, to.Human(v))
 	}
 	buf += strings.Join(a, ",") + `}`
 	return buf
@@ -85,7 +76,7 @@ func (y Y) String() string {
 	buf := `z.Y{`
 	a := []string{}
 	for _, v := range y {
-		a = append(a, quote(v))
+		a = append(a, to.Human(v))
 	}
 	buf += strings.Join(a, ",") + `}`
 	return buf
@@ -102,7 +93,7 @@ func (n N) String() string {
 	buf := `z.N{`
 	a := []string{}
 	for _, v := range n {
-		a = append(a, quote(v))
+		a = append(a, to.Human(v))
 	}
 	buf += strings.Join(a, ",") + `}`
 	return buf
@@ -120,7 +111,7 @@ func (i I) String() string {
 	buf := `z.I{`
 	a := []string{}
 	for _, v := range i {
-		a = append(a, quote(v))
+		a = append(a, to.Human(v))
 	}
 	buf += strings.Join(a, ",") + `}`
 	return buf
@@ -135,7 +126,7 @@ func (o O) String() string {
 	buf := `z.O{`
 	a := []string{}
 	for _, v := range o {
-		a = append(a, quote(v))
+		a = append(a, to.Human(v))
 	}
 	buf += strings.Join(a, ",") + `}`
 	return buf
@@ -145,13 +136,13 @@ func (o O) String() string {
 // including the boundary.
 type T struct{ This any }
 
-func (t T) String() string { return `z.T{` + quote(t.This) + `}` }
+func (t T) String() string { return `z.T{` + to.Human(t.This) + `}` }
 
 // Ti ("to inclusive") is an inclusive version of z.T which includes the
 // boundary.
 type Ti struct{ This any }
 
-func (t Ti) String() string { return `z.Ti{` + quote(t.This) + `}` }
+func (t Ti) String() string { return `z.Ti{` + to.Human(t.This) + `}` }
 
 // R ("range","rune") is a advancing expression that
 // matches a single Unicode code point (rune, int32) from an inclusive
@@ -173,7 +164,7 @@ type MM struct {
 }
 
 func (mm MM) String() string {
-	return fmt.Sprintf("z.MM{%v,%v,%v}", mm.Min, mm.Max, quote(mm.This))
+	return fmt.Sprintf("z.MM{%v,%v,%v}", mm.Min, mm.Max, to.Human(mm.This))
 }
 
 // M ("min") is an advancing expression that matches an inclusive
@@ -184,7 +175,7 @@ type M struct {
 }
 
 func (m M) String() string {
-	return fmt.Sprintf("z.M{%v,%v}", m.Min, quote(m.This))
+	return fmt.Sprintf("z.M{%v,%v}", m.Min, to.Human(m.This))
 }
 
 // M0 is shorthand for z.M{0,This}. This is useful to make otherwise
@@ -192,14 +183,14 @@ func (m M) String() string {
 type M0 struct{ This any }
 
 func (m M0) String() string {
-	return fmt.Sprintf("z.M0{%v}", quote(m.This))
+	return fmt.Sprintf("z.M0{%v}", to.Human(m.This))
 }
 
 // M1 is shorthand for z.M{1,This}.
 type M1 struct{ This any }
 
 func (m M1) String() string {
-	return fmt.Sprintf("z.M1{%v}", quote(m.This))
+	return fmt.Sprintf("z.M1{%v}", to.Human(m.This))
 }
 
 // C is a parameterized advancing expression that matches an exact count
@@ -210,5 +201,5 @@ type C struct {
 }
 
 func (c C) String() string {
-	return fmt.Sprintf("z.C{%v,%v}", c.N, quote(c.This))
+	return fmt.Sprintf("z.C{%v,%v}", c.N, to.Human(c.This))
 }
