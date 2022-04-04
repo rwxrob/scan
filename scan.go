@@ -19,8 +19,6 @@ import (
 	"github.com/rwxrob/structs/tree"
 )
 
-const ()
-
 const (
 
 	// EOD is a special value that is returned when the end of data is
@@ -119,26 +117,11 @@ func (s *R) Init(i any) {
 	s.Cur = new(Cur)
 	s.Cur.Pos = Pos{}
 	s.Cur.Pos.Line = 1
-	s.Cur.Pos.LineRune = 1
-	s.Cur.Pos.LineByte = 1
-	s.Cur.Pos.Rune = 1
 
 	s.buffer(i)
 	if s.Err.Len > 0 {
 		return
 	}
-
-	r, ln := utf8.DecodeRune(s.Buf)
-	if ln == 0 {
-		r = EOD
-		s.State |= Done
-		s.Errorf(nil, "init: failed to scan first rune")
-		return
-	}
-
-	s.Cur.Rune = r
-	s.Cur.Len = ln
-	s.Cur.Next = ln
 
 }
 
@@ -230,21 +213,18 @@ func (s *R) Scan() bool {
 	if r > utf8.RuneSelf {
 		r, ln = utf8.DecodeRune(s.Buf[s.Cur.Next:])
 	}
-	if ln != 0 {
-		s.Cur.Byte = s.Cur.Next
-		s.Cur.Pos.LineByte += s.Cur.Len
-	} else {
+	if ln == 0 {
 		r = EOD
 		s.State |= Done
-	}
-	s.Cur.Rune = r
-	s.Cur.Pos.Rune += 1
-	s.Cur.Next += ln
-	s.Cur.Pos.LineRune += 1
-	s.Cur.Len = ln
-	if r == EOD {
 		return false
 	}
+	s.Cur.Byte = s.Cur.Next
+	s.Cur.Pos.LineByte += s.Cur.Len
+	s.Cur.Rune = r
+	s.Cur.Pos.Rune += 1
+	s.Cur.Pos.LineRune += 1
+	s.Cur.Next += ln
+	s.Cur.Len = ln
 	return true
 }
 
@@ -296,7 +276,7 @@ func (s *R) Back() {
 // Peek returns a string containing all the runes from the current
 // scanner cursor position forward to the number of runes passed.
 // If end of data is encountered it will return everything up until that
-// point.  Also see Slice and SliceTo.
+// point.  Also see PeekSlice and PeekTo.
 func (s *R) Peek(n uint) string {
 	buf := ""
 	pos := s.Cur.Byte
