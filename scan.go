@@ -10,9 +10,13 @@ package scan
 
 import (
 	"fmt"
+	"log"
 	"regexp"
 	"unicode/utf8"
 )
+
+// ViewLen sets the number of bytes to view before eliding the rest.
+var ViewLen = 20
 
 // R (as in scan.R or "scanner") implements a buffered data, non-linear,
 // rune-centric, scanner with regular expression support. Keep in mind
@@ -33,6 +37,18 @@ func (s *R) String() string {
 
 // Print is shorthand for fmt.Println(s).
 func (s *R) Print() { fmt.Println(s) }
+
+// View logs a quoted view of the current buffer content eliding it
+// after ViewLen bytes in length.
+func (s *R) View() {
+	end := s.Pos + ViewLen
+	elided := "..."
+	if end > len(s.Buf) {
+		end = len(s.Buf)
+		elided = ""
+	}
+	log.Printf("%q%v", s.Buf[s.Pos:end], elided)
+}
 
 // Scan decodes the next rune, setting it to Rune, and advances Pos by
 // the size of the Rune in bytes returning false then there is nothing

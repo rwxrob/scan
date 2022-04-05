@@ -2,6 +2,8 @@ package scan_test
 
 import (
 	"fmt"
+	"log"
+	"os"
 	"regexp"
 
 	"github.com/rwxrob/scan"
@@ -84,4 +86,20 @@ func ExampleR_Match() {
 	// 1
 	// -1
 	// -1
+}
+
+func ExampleR_View() {
+	defer log.SetOutput(os.Stderr)
+	log.SetOutput(os.Stdout)
+	defer log.SetFlags(log.Flags())
+	log.SetFlags(0)
+
+	s := scan.R{Buf: []byte(`foo`)}
+	s.View()
+	scan.ViewLen = 2
+	s.View()
+
+	// Output:
+	// "foo"
+	// "fo"...
 }
