@@ -81,7 +81,7 @@ func ExampleR_Match() {
 	fmt.Println(s.Match(F))
 	fmt.Println(s.Match(o))
 	// Output:
-	// true
-	// false
-	// false
+	// 1
+	// -1
+	// -1
 }

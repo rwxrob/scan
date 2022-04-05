@@ -67,16 +67,18 @@ func (s *R) Is(a string) bool {
 	return false
 }
 
-// Match returns true if the passed regular expression matches the
-// current position in the buffer providing a mechanism for positive and
-// negative lookahead expressions.
-func (s *R) Match(re *regexp.Regexp) bool {
+// Match checks for a regular expression match at the current position
+// in the buffer providing a mechanism for positive and negative
+// lookahead expressions. It returns the length of the match. Successful
+// matches might be zero (see regexp.Regexp.FindIndex). A negative value
+// is returned if no match is found.
+func (s *R) Match(re *regexp.Regexp) int {
 	loc := re.FindIndex(s.Buf[s.Pos:])
 	if loc == nil {
-		return false
+		return -1
 	}
 	if loc[0] == 0 {
-		return true
+		return loc[1]
 	}
-	return false
+	return -1
 }
