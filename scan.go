@@ -61,3 +61,15 @@ func (s *R) ScanN(n int) bool {
 	}
 	return true
 }
+
+// Is returns true if the passed string matches the current position in
+// the buffer.
+func (s *R) Is(a string) bool {
+	if len(a)+s.Pos > len(s.Buf) {
+		return false
+	}
+	if string(s.Buf[s.Pos:s.Pos+len(a)]) == a {
+		return true
+	}
+	return false
+}

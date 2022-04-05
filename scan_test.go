@@ -57,3 +57,14 @@ func ExampleR_ScanN() {
 	// false
 	// 3 U+006F 'o'
 }
+
+func ExampleR_Is() {
+	s := scan.R{Buf: []byte(`foo`)}
+
+	fmt.Println(s.Is("fo"))
+	fmt.Println(s.Is("bar"))
+
+	// Output:
+	// true
+	// false
+}
