@@ -10,15 +10,19 @@ package scan
 
 import (
 	"fmt"
+	"regexp"
 	"unicode/utf8"
 )
 
 // R (as in scan.R or "scanner") implements a buffered data, non-linear,
-// rune-centric, scanner with regular expression support.
+// rune-centric, scanner with regular expression support. Keep in mind
+// that if and when you change the Pos directly that Rune will not
+// itself be updated as it is only updated by calling Scan. Often an
+// update to Rune as well would be inconsequential, even wasteful.
 type R struct {
-	Buf  []byte
-	Pos  int
-	Rune rune
+	Buf  []byte // full buffer for lookahead or behind
+	Pos  int    // current position in the buffer
+	Rune rune   // updated by Scan
 }
 
 // String implements fmt.Stringer with simply the Pos and quoted Rune
@@ -51,17 +55,6 @@ func (s *R) Scan() bool {
 	return true
 }
 
-// ScanN calls Scan n number of times stopping and returning false if
-// and when Scan returns false.
-func (s *R) ScanN(n int) bool {
-	for i := 0; i < n; i++ {
-		if !s.Scan() {
-			return false
-		}
-	}
-	return true
-}
-
 // Is returns true if the passed string matches the current position in
 // the buffer.
 func (s *R) Is(a string) bool {
@@ -69,6 +62,20 @@ func (s *R) Is(a string) bool {
 		return false
 	}
 	if string(s.Buf[s.Pos:s.Pos+len(a)]) == a {
+		return true
+	}
+	return false
+}
+
+// Match returns true if the passed regular expression matches the
+// current position in the buffer providing a mechanism for positive and
+// negative lookahead expressions.
+func (s *R) Match(re *regexp.Regexp) bool {
+	loc := re.FindIndex(s.Buf[s.Pos:])
+	if loc == nil {
+		return false
+	}
+	if loc[0] == 0 {
 		return true
 	}
 	return false

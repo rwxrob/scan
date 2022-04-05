@@ -2,6 +2,7 @@ package scan_test
 
 import (
 	"fmt"
+	"regexp"
 
 	"github.com/rwxrob/scan"
 )
@@ -43,19 +44,21 @@ func ExampleR_Scan() {
 	// 3 U+006F 'o'
 }
 
-func ExampleR_ScanN() {
-	s := scan.R{Buf: []byte(`foo`)}
+func ExampleR_Scan_jump() {
+	s := scan.R{Buf: []byte(`foo1234`)}
 
-	fmt.Println(s.ScanN(3))
+	fmt.Println(s.Scan())
 	s.Print()
-	fmt.Println(s.ScanN(1))
+	s.Pos += 2
+	fmt.Println(s.Scan())
 	s.Print()
 
 	// Output:
 	// true
-	// 3 U+006F 'o'
-	// false
-	// 3 U+006F 'o'
+	// 1 U+0066 'f'
+	// true
+	// 4 U+0031 '1'
+
 }
 
 func ExampleR_Is() {
@@ -66,5 +69,19 @@ func ExampleR_Is() {
 
 	// Output:
 	// true
+	// false
+}
+
+func ExampleR_Match() {
+	s := scan.R{Buf: []byte(`foo`)}
+	f := regexp.MustCompile(`f`)
+	F := regexp.MustCompile(`F`)
+	o := regexp.MustCompile(`o`)
+	fmt.Println(s.Match(f))
+	fmt.Println(s.Match(F))
+	fmt.Println(s.Match(o))
+	// Output:
+	// true
+	// false
 	// false
 }
