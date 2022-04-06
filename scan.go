@@ -24,37 +24,39 @@ var ViewLen = 20
 // itself be updated as it is only updated by calling Scan. Often an
 // update to Rune as well would be inconsequential, even wasteful.
 type R struct {
-	Buf  []byte // full buffer for lookahead or behind
-	Pos  int    // current position in the buffer
-	Rune rune   // updated by Scan
+	Buf   []byte // full buffer for lookahead or behind
+	Pos   int    // current position in the buffer
+	Rune  rune   // updated by Scan
+	Trace int
 }
 
 // String implements fmt.Stringer with simply the Pos and quoted Rune
 // along with its Unicode.
 func (s *R) String() string {
-	return fmt.Sprintf("%v %U %q", s.Pos, s.Rune, s.Rune)
-}
-
-// Print is shorthand for fmt.Println(s).
-func (s *R) Print() { fmt.Println(s) }
-
-// View logs a quoted view of the current buffer content eliding it
-// after ViewLen bytes in length.
-func (s *R) View() {
 	end := s.Pos + ViewLen
 	elided := "..."
 	if end > len(s.Buf) {
 		end = len(s.Buf)
 		elided = ""
 	}
-	log.Printf("%q%v", s.Buf[s.Pos:end], elided)
+	return fmt.Sprintf("%v %q %q%v",
+		s.Pos, s.Rune, s.Buf[s.Pos:end], elided)
 }
+
+// Print is shorthand for fmt.Println(s).
+func (s *R) Print() { fmt.Print(s) }
+
+// Log is shorthand for log.Print(s).
+func (s *R) Log() { log.Print(s) }
 
 // Scan decodes the next rune, setting it to Rune, and advances Pos by
 // the size of the Rune in bytes returning false then there is nothing
 // left to scan. Only runes bigger than utf8.RuneSelf are decoded since
 // most runes (ASCII) will usually be under this number.
 func (s *R) Scan() bool {
+	if s.Trace > 0 {
+		s.Log()
+	}
 	if len(s.Buf) == s.Pos {
 		return false
 	}

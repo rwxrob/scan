@@ -22,3 +22,8 @@ Card](https://goreportcard.com/badge/github.com/rwxrob/scan)](https://goreportca
   Using `s := scan.R{Buf: []byte("foo")}` is a perfect good way to
   initialize this bare-bones scanner and should be promoted in order to
   keep the scope of this scanner very low-level and performant.
+
+* **Trace is an int for later bitwise flags.**
+
+  The benefit of adding levels of tracing are obvious, just not ready to
+  add them at the moment.
