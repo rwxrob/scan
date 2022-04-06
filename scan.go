@@ -60,12 +60,8 @@ func (s *R) Log() { log.Println(s) }
 // most runes (ASCII) will usually be under this number.
 func (s *R) Scan() bool {
 
-	if len(s.Buf)-1 == s.Pos {
+	if len(s.Buf) == s.Pos {
 		return false
-	}
-
-	if s.Trace > 0 || Trace > 0 {
-		s.Log()
 	}
 
 	ln := 1
@@ -78,12 +74,18 @@ func (s *R) Scan() bool {
 	}
 	s.Pos += ln
 	s.Rune = r
+	if s.Trace > 0 || Trace > 0 {
+		s.Log()
+	}
+
 	return true
 }
 
-// Is returns true if the passed string matches the current position in
-// the buffer.
-func (s *R) Is(a string) bool {
+// Peek returns true if the passed string matches the current position in
+// the buffer (which appears to be peeking ahead since Rune was the last
+// scanned and has now in the past even though it appears current).
+// Returns false if the string would go beyond the length of Buf.
+func (s *R) Peek(a string) bool {
 	if len(a)+s.Pos > len(s.Buf) {
 		return false
 	}
@@ -108,7 +110,3 @@ func (s *R) Match(re *regexp.Regexp) int {
 	}
 	return -1
 }
-
-// func (s *R) Last() bool {
-// 	return len(s.Buf) == s.
-// }

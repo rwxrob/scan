@@ -62,11 +62,11 @@ func ExampleR_Scan_jump() {
 
 }
 
-func ExampleR_Is() {
+func ExampleR_Peek() {
 	s := scan.R{Buf: []byte(`foo`)}
 
-	fmt.Println(s.Is("fo"))
-	fmt.Println(s.Is("bar"))
+	fmt.Println(s.Peek("fo"))
+	fmt.Println(s.Peek("bar"))
 
 	// Output:
 	// true
