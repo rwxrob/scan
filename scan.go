@@ -72,8 +72,10 @@ func (s *R) Scan() bool {
 			return false
 		}
 	}
+
 	s.Pos += ln
 	s.Rune = r
+
 	if s.Trace > 0 || Trace > 0 {
 		s.Log()
 	}
