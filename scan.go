@@ -59,12 +59,15 @@ func (s *R) Log() { log.Println(s) }
 // left to scan. Only runes bigger than utf8.RuneSelf are decoded since
 // most runes (ASCII) will usually be under this number.
 func (s *R) Scan() bool {
+
+	if len(s.Buf)-1 == s.Pos {
+		return false
+	}
+
 	if s.Trace > 0 || Trace > 0 {
 		s.Log()
 	}
-	if len(s.Buf) == s.Pos {
-		return false
-	}
+
 	ln := 1
 	r := rune(s.Buf[s.Pos])
 	if r > utf8.RuneSelf {
@@ -105,3 +108,7 @@ func (s *R) Match(re *regexp.Regexp) int {
 	}
 	return -1
 }
+
+// func (s *R) Last() bool {
+// 	return len(s.Buf) == s.
+// }
