@@ -15,6 +15,11 @@ import (
 	"unicode/utf8"
 )
 
+// Trace activates tracing for anything using the package. This is
+// sometimes more convenient when an application uses the package but
+// does not give access to the equivalent R.Trace property.
+var Trace int
+
 // ViewLen sets the number of bytes to view before eliding the rest.
 var ViewLen = 20
 
@@ -54,7 +59,7 @@ func (s *R) Log() { log.Print(s) }
 // left to scan. Only runes bigger than utf8.RuneSelf are decoded since
 // most runes (ASCII) will usually be under this number.
 func (s *R) Scan() bool {
-	if s.Trace > 0 {
+	if s.Trace > 0 || Trace > 0 {
 		s.Log()
 	}
 	if len(s.Buf) == s.Pos {
