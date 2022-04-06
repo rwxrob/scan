@@ -49,10 +49,10 @@ func (s *R) String() string {
 }
 
 // Print is shorthand for fmt.Println(s).
-func (s *R) Print() { fmt.Print(s) }
+func (s *R) Print() { fmt.Println(s) }
 
 // Log is shorthand for log.Print(s).
-func (s *R) Log() { log.Print(s) }
+func (s *R) Log() { log.Println(s) }
 
 // Scan decodes the next rune, setting it to Rune, and advances Pos by
 // the size of the Rune in bytes returning false then there is nothing

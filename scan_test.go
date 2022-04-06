@@ -2,8 +2,6 @@ package scan_test
 
 import (
 	"fmt"
-	"log"
-	"os"
 	"regexp"
 
 	"github.com/rwxrob/scan"
@@ -35,15 +33,16 @@ func ExampleR_Scan() {
 	s.Print()             // same as before
 
 	// Output:
-	// 0 U+0000 '\x00'
+	// 0 '\x00' "foo"
 	// true
-	// 1 U+0066 'f'
+	// 1 'f' "oo"
 	// true
-	// 2 U+006F 'o'
+	// 2 'o' "o"
 	// true
-	// 3 U+006F 'o'
+	// 3 'o' ""
 	// false
-	// 3 U+006F 'o'
+	// 3 'o' ""
+
 }
 
 func ExampleR_Scan_jump() {
@@ -57,9 +56,9 @@ func ExampleR_Scan_jump() {
 
 	// Output:
 	// true
-	// 1 U+0066 'f'
+	// 1 'f' "oo1234"
 	// true
-	// 4 U+0031 '1'
+	// 4 '1' "234"
 
 }
 
@@ -86,20 +85,4 @@ func ExampleR_Match() {
 	// 1
 	// -1
 	// -1
-}
-
-func ExampleR_View() {
-	defer log.SetOutput(os.Stderr)
-	log.SetOutput(os.Stdout)
-	defer log.SetFlags(log.Flags())
-	log.SetFlags(0)
-
-	s := scan.R{Buf: []byte(`foo`)}
-	s.View()
-	scan.ViewLen = 2
-	s.View()
-
-	// Output:
-	// "foo"
-	// "fo"...
 }
