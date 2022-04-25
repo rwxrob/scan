@@ -101,7 +101,9 @@ func (s *R) Peek(a string) bool {
 // in the buffer providing a mechanism for positive and negative
 // lookahead expressions. It returns the length of the match. Successful
 // matches might be zero (see regexp.Regexp.FindIndex). A negative value
-// is returned if no match is found.
+// is returned if no match is found. Note that Go regular expressions
+// now include the Unicode character classes (ex: \p{L}) that should be
+// used over dated alternatives (ex: \w).
 func (s *R) Match(re *regexp.Regexp) int {
 	loc := re.FindIndex(s.Buf[s.Pos:])
 	if loc == nil {
