@@ -83,15 +83,14 @@ func (s *R) Scan() bool {
 	return true
 }
 
-// Peek returns true if the passed string matches the current position in
-// the buffer (which appears to be peeking ahead since Rune was the last
-// scanned and has now in the past even though it appears current).
-// Returns false if the string would go beyond the length of Buf.
+// Peek returns true if the passed string matches the current position
+// including the last s.Rune (s.Pos-1) in the buffer Returns false if
+// the string would go beyond the length of Buf.
 func (s *R) Peek(a string) bool {
-	if len(a)+s.Pos > len(s.Buf) {
+	if len(a)+s.Pos-1 > len(s.Buf) {
 		return false
 	}
-	if string(s.Buf[s.Pos:s.Pos+len(a)]) == a {
+	if string(s.Buf[s.Pos-1:s.Pos-1+len(a)]) == a {
 		return true
 	}
 	return false
@@ -99,13 +98,14 @@ func (s *R) Peek(a string) bool {
 
 // Match checks for a regular expression match at the current position
 // in the buffer providing a mechanism for positive and negative
-// lookahead expressions. It returns the length of the match. Successful
-// matches might be zero (see regexp.Regexp.FindIndex). A negative value
-// is returned if no match is found. Note that Go regular expressions
-// now include the Unicode character classes (ex: \p{L}) that should be
-// used over dated alternatives (ex: \w).
+// lookahead expressions (which includes the current s.Rune, s.Pos-1).
+// It returns the length of the match. Successful matches might be zero
+// (see regexp.Regexp.FindIndex). A negative value is returned if no
+// match is found. Keep in mind that Note that Go regular expressions now include the
+// Unicode character classes (ex: \p{L}) that should be used over dated
+// alternatives (ex: \w).
 func (s *R) Match(re *regexp.Regexp) int {
-	loc := re.FindIndex(s.Buf[s.Pos:])
+	loc := re.FindIndex(s.Buf[s.Pos-1:])
 	if loc == nil {
 		return -1
 	}

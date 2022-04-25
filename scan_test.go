@@ -45,6 +45,18 @@ func ExampleR_Scan() {
 
 }
 
+func ExampleR_Scan_loop() {
+	s := scan.R{Buf: []byte(`abcdefgh`)}
+	for s.Scan() {
+		fmt.Print(string(s.Rune))
+		if s.Pos != len(s.Buf) {
+			fmt.Print("-")
+		}
+	}
+	// Output:
+	// a-b-c-d-e-f-g-h
+}
+
 func ExampleR_Scan_jump() {
 	s := scan.R{Buf: []byte(`foo1234`)}
 
@@ -65,6 +77,8 @@ func ExampleR_Scan_jump() {
 func ExampleR_Peek() {
 	s := scan.R{Buf: []byte(`foo`)}
 
+	s.Scan() // never forget to scan (panic otherwise)
+
 	fmt.Println(s.Peek("fo"))
 	fmt.Println(s.Peek("bar"))
 
@@ -75,12 +89,17 @@ func ExampleR_Peek() {
 
 func ExampleR_Match() {
 	s := scan.R{Buf: []byte(`foo`)}
+
+	s.Scan() // never forget to scan (panic otherwise)
+
 	f := regexp.MustCompile(`f`)
 	F := regexp.MustCompile(`F`)
 	o := regexp.MustCompile(`o`)
+
 	fmt.Println(s.Match(f))
 	fmt.Println(s.Match(F))
 	fmt.Println(s.Match(o))
+
 	// Output:
 	// 1
 	// -1
