@@ -60,7 +60,7 @@ func (s *R) Log() { log.Println(s) }
 // most runes (ASCII) will usually be under this number.
 func (s *R) Scan() bool {
 
-	if len(s.Buf) == s.Pos {
+	if s.Pos >= len(s.Buf) {
 		return false
 	}
 
