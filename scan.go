@@ -38,7 +38,7 @@ type R struct {
 
 // String implements fmt.Stringer with simply the position (P) and
 // quoted rune (R) along with its Unicode.
-func (s *R) String() string {
+func (s R) String() string {
 	end := s.P + ViewLen
 	elided := "..."
 	if end > len(s.B) {
@@ -50,10 +50,10 @@ func (s *R) String() string {
 }
 
 // Print is shorthand for fmt.Println(s).
-func (s *R) Print() { fmt.Println(s) }
+func (s R) Print() { fmt.Println(s) }
 
 // Log is shorthand for log.Print(s).
-func (s *R) Log() { log.Println(s) }
+func (s R) Log() { log.Println(s) }
 
 // Scan decodes the next rune, setting it to R, and advances position
 // (P) by the size of the rune (R) in bytes returning false then there
