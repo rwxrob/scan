@@ -13,13 +13,13 @@ func ExampleR_init() {
 	// * no need for pointer
 	// * order guaranteed never to change
 
-	s := scan.R{Buf: []byte(`some thing`)}
+	s := scan.R{B: []byte(`some thing`)}
 	fmt.Println(s)
 
 }
 
 func ExampleR_Scan() {
-	s := scan.R{Buf: []byte(`foo`)}
+	s := scan.R{B: []byte(`foo`)}
 
 	s.Print() // equivalent of a "zero value"
 
@@ -46,10 +46,10 @@ func ExampleR_Scan() {
 }
 
 func ExampleR_Scan_loop() {
-	s := scan.R{Buf: []byte(`abcdefgh`)}
+	s := scan.R{B: []byte(`abcdefgh`)}
 	for s.Scan() {
-		fmt.Print(string(s.Rune))
-		if s.Pos != len(s.Buf) {
+		fmt.Print(string(s.R))
+		if s.P != len(s.B) {
 			fmt.Print("-")
 		}
 	}
@@ -58,11 +58,11 @@ func ExampleR_Scan_loop() {
 }
 
 func ExampleR_Scan_jump() {
-	s := scan.R{Buf: []byte(`foo1234`)}
+	s := scan.R{B: []byte(`foo1234`)}
 
 	fmt.Println(s.Scan())
 	s.Print()
-	s.Pos += 2
+	s.P += 2
 	fmt.Println(s.Scan())
 	s.Print()
 
@@ -75,7 +75,7 @@ func ExampleR_Scan_jump() {
 }
 
 func ExampleR_Peek() {
-	s := scan.R{Buf: []byte(`foo`)}
+	s := scan.R{B: []byte(`foo`)}
 
 	s.Scan() // never forget to scan (panic otherwise)
 
@@ -88,7 +88,7 @@ func ExampleR_Peek() {
 }
 
 func ExampleR_Match() {
-	s := scan.R{Buf: []byte(`foo`)}
+	s := scan.R{B: []byte(`foo`)}
 
 	s.Scan() // never forget to scan (panic otherwise)
 
