@@ -9,9 +9,11 @@ scanner can be quickly written by-hand or generated automatically.
 package scan
 
 import (
+	"bytes"
 	"fmt"
 	"log"
 	"regexp"
+	"text/template"
 	"unicode/utf8"
 )
 
@@ -23,21 +25,147 @@ var Trace int
 // ViewLen sets the number of bytes to view before eliding the rest.
 var ViewLen = 20
 
+var DefaultErrorMessage = `failed to scan`
+
 // R (as in scan.R or "scanner") implements a buffered data, non-linear,
 // rune-centric, scanner with regular expression support. Keep in mind
 // that if and when you change the position (P) directly that rune (R) will not
 // itself be updated as it is only updated by calling Scan. Often an
 // update to the rune (R) as well would be inconsequential, even wasteful.
 type R struct {
-	B      []byte // full buffer for lookahead or behind
-	P      int    // current position in the buffer
-	R      rune   // updated by Scan
-	Trace  int
-	Errors []error
+	B        []byte             // full buffer for lookahead or behind
+	P        int                // index in B slice, points *after* R
+	R        rune               // last decoded, Scan updates, >1byte
+	Trace    int                // activate trace log (>0)
+	Errors   []error            // stack of errors in order
+	Template *template.Template // for Report()
+	NewLine  []string           // []string{"\r\n","\n"} by default
+}
+
+const DefaultTemplate = `
+{{- if .Errors -}}
+	{{- range .Errors -}}
+		error: {{.}}
+	{{- end -}}
+{{- else -}}
+	{{- .Pos -}}
+{{- end -}}
+`
+
+// Template is used by Report to log human-friendly scanner state
+// information if the scan.R has not set its own Template.
+var Template *template.Template
+
+func init() {
+	var err error
+	Template, err = template.New("DefaultTemplate").Parse(DefaultTemplate)
+	if err != nil {
+		panic(err)
+	}
+}
+
+// Position contains the human-friendly information about the position
+// within a give text file. Note that all values begin with 1 and not
+// 0.
+type Position struct {
+	Rune    rune // rune at this location
+	BufByte int  // byte offset in file
+	BufRune int  // rune offset in file
+	Line    int  // line offset
+	LByte   int  // line column byte offset
+	LRune   int  // line column rune offset
+}
+
+// String fulfills the fmt.Stringer interface by printing
+// the Position in a human-friendly way:
+//
+//   U+1F47F '👿' 1,3-5 (3-5)
+//                | | |  | |
+//             line | |  | overall byte offset
+//   line rune offset |  overall rune offset
+//     line byte offset
+//
+func (p Position) String() string {
+	s := fmt.Sprintf(`%U %q %v,%v-%v (%v-%v)`,
+		p.Rune, p.Rune,
+		p.Line, p.LRune, p.LByte,
+		p.BufRune, p.BufByte,
+	)
+	return s
+}
+
+// Print prints the cursor itself in String form. See String.
+func (p Position) Print() { fmt.Println(p.String()) }
+
+// Log calls log.Println on the cursor itself in String form. See String.
+func (p Position) Log() { log.Println(p.String()) }
+
+// Pos returns a human-friendly Position for the current location.
+// When multiple positions are needed use Positions instead.
+
+func (s R) Pos() Position { return s.Positions(s.P)[0] }
+
+// Positions returns human-friendly Position information (which can easily
+// be used to populate a text/template) for each raw byte offset (s.P).
+// Only one pass through the buffer (s.B) is required to count lines and
+// runes since the raw byte position (s.P) is frequently changed
+// directly.  Therefore, when multiple positions are wanted, consider
+// caching the raw byte positions (s.P) and calling Positions() once for
+// all of them.
+func (s R) Positions(p ...int) []Position {
+	pos := make([]Position, len(p))
+
+	if len(p) == 0 {
+		return pos
+	}
+
+	if s.NewLine == nil {
+		s.NewLine = []string{"\r\n", "\n"}
+	}
+
+	_rune, line, lbyte, lrune := 1, 1, 1, 1
+	_s := R{B: s.B}
+	//_s.Trace++
+
+	for _s.Scan() {
+
+		for _, nl := range s.NewLine {
+			if _s.Peek(nl) {
+				line++
+				_s.P += len(nl) - 1
+				_rune += len(nl) - 1
+				lbyte = 0
+				lrune = 0
+				continue
+			}
+		}
+
+		for i, v := range p {
+			if _s.P == v {
+				pos[i] = Position{
+					Rune:    _s.R,
+					BufByte: _s.P,
+					BufRune: _rune,
+					Line:    line,
+					LByte:   lbyte,
+					LRune:   lrune,
+				}
+			}
+		}
+
+		rlen := len([]byte(string(s.R)))
+		lbyte += rlen
+		lrune++
+		_rune++
+
+	}
+
+	return pos
 }
 
 // String implements fmt.Stringer with simply the position (P) and
-// quoted rune (R) along with its Unicode.
+// quoted rune (R) along with its Unicode. For printing more human
+// friendly information about the current scanner state use Report.
 func (s R) String() string {
 	end := s.P + ViewLen
 	elided := "..."
@@ -114,4 +242,57 @@ func (s *R) Match(re *regexp.Regexp) int {
 		return loc[1]
 	}
 	return -1
+}
+
+// Report will fill in the s.Template (or scan.Template if not set) and
+// log it to standard error. See the log package for removing prefixes
+// and such. The DefaultTemplate is compiled at init() and assigned to
+// the scan.Template global package variable. To silence reports
+// developers may use the log package or simply ensure that both
+// s.Template and scan.Template are nil.
+func (s R) Report() {
+	// TODO expand the s.Errors if no s.Position on first
+	tmpl := s.Template
+	if s.Template == nil {
+		tmpl = Template
+	}
+	if tmpl == nil {
+		return
+	}
+	var buf bytes.Buffer
+	if err := tmpl.Execute(&buf, s); err != nil {
+		log.Println(err)
+		return
+	}
+	log.Print(buf.String())
+}
+
+type Error struct {
+	P   int      // can be left blank if Pos is defined
+	Pos Position // can be left blank, Report will populate
+	Msg string
+}
+
+func (e Error) Error() string {
+	return fmt.Sprintf("%v at %v", e.Msg, e.Pos)
+}
+
+// Error adds an error to the Errors slice. Takes fmt.Sprintf() type
+// arguments. The current position (s.Pos) is saved with the error.
+// Since s.Pos scans to find the right location if there are multiple
+// errors anticipated consider directly appending to Errors instead and
+// only using the byte offset position (s.P). Report will detect if the
+// first of Errors does not have a Position and will populate them
+// efficiently before executing the template. For single errors, calling
+// this method should be fine.
+func (s *R) Error(a ...any) {
+	msg := DefaultErrorMessage
+	switch {
+	case len(a) > 0:
+		msg, _ = a[0].(string)
+	case len(a) > 1:
+		form, _ := a[0].(string)
+		msg = fmt.Sprintf(form, a[1:]...)
+	}
+	s.Errors = append(s.Errors, Error{Pos: s.Pos(), Msg: msg})
 }

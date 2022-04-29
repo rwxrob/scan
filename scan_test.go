@@ -2,6 +2,8 @@ package scan_test
 
 import (
 	"fmt"
+	"log"
+	"os"
 	"regexp"
 
 	"github.com/rwxrob/scan"
@@ -104,4 +106,67 @@ func ExampleR_Match() {
 	// 1
 	// -1
 	// -1
+}
+
+func ExampleR_Pos() {
+	s := scan.R{B: []byte("one line\nand another\r\nand yet another")}
+
+	s.P = 2
+	s.Pos().Print()
+
+	s.P = 0
+	s.Scan()
+	s.Scan()
+	s.Pos().Print()
+
+	s.P = 12
+	s.Pos().Print()
+
+	s.P = 27
+	s.Pos().Print()
+
+	// Output:
+	// U+006E 'n' 1,2-2 (2-2)
+	// U+006E 'n' 1,2-2 (2-2)
+	// U+0064 'd' 2,3-3 (12-12)
+	// U+0079 'y' 4,5-5 (27-27)
+
+}
+
+func ExampleR_Positions() {
+	s := scan.R{B: []byte("one line\nand another\r\nand yet another")}
+
+	for _, p := range s.Positions(2, 12, 27) {
+		p.Print()
+	}
+
+	// Output:
+	// U+006E 'n' 1,2-2 (2-2)
+	// U+0064 'd' 2,3-3 (12-12)
+	// U+0079 'y' 4,5-5 (27-27)
+
+}
+
+func ExampleR_Report() {
+	defer log.SetFlags(log.Flags())
+	defer log.SetOutput(os.Stderr)
+	log.SetOutput(os.Stdout)
+	log.SetFlags(0)
+
+	s := scan.R{B: []byte("one line\nand another\r\nand yet another")}
+
+	s.Scan()
+	s.Report()
+
+	s.P = 14
+	s.Report()
+
+	s.Error("sample error")
+	s.Report()
+
+	// Output:
+	// U+006F 'o' 1,1-1 (1-1)
+	// U+0061 'a' 2,5-5 (14-14)
+	// error: sample error at U+0061 'a' 2,5-5 (14-14)
+
 }
