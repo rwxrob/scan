@@ -35,6 +35,7 @@ var DefaultErrorMessage = `failed to scan`
 type R struct {
 	B        []byte             // full buffer for lookahead or behind
 	P        int                // index in B slice, points *after* R
+	LP       int                // index before last Scan
 	R        rune               // last decoded, Scan updates, >1byte
 	Trace    int                // activate trace log (>0)
 	Errors   []error            // stack of errors in order
@@ -202,6 +203,7 @@ func (s *R) Scan() bool {
 		}
 	}
 
+	s.LP = s.P
 	s.P += ln
 	s.R = r
 
