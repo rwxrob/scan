@@ -76,23 +76,39 @@ func ExampleR_Scan_jump() {
 
 }
 
-func ExampleR_Peek() {
+func ExampleR_Is() {
 	s := scan.R{B: []byte(`foo`)}
 
-	s.Scan() // never forget to scan (panic otherwise)
+	s.Scan() // never forget to scan with Is (use Peek otherwise)
 
-	fmt.Println(s.Peek("fo"))
-	fmt.Println(s.Peek("bar"))
+	fmt.Println(s.Is("fo"))
+	fmt.Println(s.Is("bar"))
 
 	// Output:
 	// true
 	// false
 }
 
+func ExampleR_Is_not() {
+	s := scan.R{B: []byte("\r\n")}
+
+	s.Scan() // never forget to scan with Is (use Peek otherwise)
+
+	fmt.Println(s.Is("\r"))
+	fmt.Println(s.Is("\r\n"))
+	fmt.Println(s.Is("\n"))
+
+	// Output:
+	// true
+	// true
+	// false
+
+}
+
 func ExampleR_Match() {
 	s := scan.R{B: []byte(`foo`)}
 
-	s.Scan() // never forget to scan (panic otherwise)
+	s.Scan() // never forget to scan (use PeekMatch otherwise)
 
 	f := regexp.MustCompile(`f`)
 	F := regexp.MustCompile(`F`)
@@ -129,7 +145,7 @@ func ExampleR_Pos() {
 	// U+006E 'n' 1,2-2 (2-2)
 	// U+006E 'n' 1,2-2 (2-2)
 	// U+0064 'd' 2,3-3 (12-12)
-	// U+0079 'y' 4,5-5 (27-27)
+	// U+0079 'y' 3,5-5 (27-27)
 
 }
 
@@ -143,7 +159,7 @@ func ExampleR_Positions() {
 	// Output:
 	// U+006E 'n' 1,2-2 (2-2)
 	// U+0064 'd' 2,3-3 (12-12)
-	// U+0079 'y' 4,5-5 (27-27)
+	// U+0079 'y' 3,5-5 (27-27)
 
 }
 

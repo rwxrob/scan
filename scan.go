@@ -131,7 +131,7 @@ func (s R) Positions(p ...int) []Position {
 	for _s.Scan() {
 
 		for _, nl := range s.NewLine {
-			if _s.Peek(nl) {
+			if _s.Is(nl) {
 				line++
 				_s.P += len(nl) - 1
 				_rune += len(nl) - 1
@@ -214,39 +214,60 @@ func (s *R) Scan() bool {
 	return true
 }
 
-// Peek returns true if the passed string matches the current position
-// including the last s.R (s.P-1) in the buffer (unless s.P-1 would be
-// less than zero, then starts with s.P). Returns false if the string
+// Peek returns true if the passed string matches from current position
+// in the buffer (s.P) forward. Returns false if the string
 // would go beyond the length of buffer (len(s.B)).
 func (s *R) Peek(a string) bool {
-	p := s.P - 1
-	if p < 0 {
-		p = 0
-	}
-	if len(a)+p > len(s.B) {
+	if len(a)+s.P > len(s.B) {
 		return false
 	}
-	if string(s.B[p:p+len(a)]) == a {
+	if string(s.B[s.P:s.P+len(a)]) == a {
 		return true
 	}
 	return false
 }
 
-// Match checks for a regular expression match at the current position
-// in the buffer providing a mechanism for positive and negative
-// lookahead expressions (which includes the current s.R, s.P-1 unless
-// s.P-1 is less than 0, then just s.P).  It returns the length of the
-// match. Successful matches might be zero (see
-// regexp.Regexp.FindIndex). A negative value is returned if no match is
-// found. Keep in mind that Note that Go regular expressions now include
-// the Unicode character classes (ex: \p{L}) that should be used over
-// dated alternatives (ex: \w).
-func (s *R) Match(re *regexp.Regexp) int {
-	p := s.P - 1
-	if p < 0 {
-		p = 0
+// Is returns true if the passed string matches the last scanned rune
+// and the runes ahead matching the length of the string.  Returns false
+// if the string would go beyond the length of buffer (len(s.B)).
+func (s *R) Is(a string) bool {
+	if len(a)+s.LP > len(s.B) {
+		return false
 	}
-	loc := re.FindIndex(s.B[p:])
+
+	if string(s.B[s.LP:s.LP+len(a)]) == a {
+		return true
+	}
+	return false
+}
+
+// PeekMatch checks for a regular expression match at the current
+// position in the buffer providing a mechanism for positive and
+// negative lookahead expressions. It returns the length of the match.
+// Successful matches might be zero (see regexp.Regexp.FindIndex).
+// A negative value is returned if no match is found. Note that Go
+// regular expressions now include the Unicode character classes (ex:
+// \p{L}) that should be used over dated alternatives (ex: \w).
+func (s *R) PeekMatch(re *regexp.Regexp) int {
+	loc := re.FindIndex(s.B[s.P:])
+	if loc == nil {
+		return -1
+	}
+	if loc[0] == 0 {
+		return loc[1]
+	}
+	return -1
+}
+
+// Match checks for a regular expression match at the last position in
+// the buffer (s.LP) providing a mechanism for positive and negative
+// lookahead expressions. It returns the length of the match.
+// Successful matches might be zero (see regexp.Regexp.FindIndex).
+// A negative value is returned if no match is found.  Note that Go
+// regular expressions now include the Unicode character classes (ex:
+// \p{L}) that should be used over dated alternatives (ex: \w).
+func (s *R) Match(re *regexp.Regexp) int {
+	loc := re.FindIndex(s.B[s.LP:])
 	if loc == nil {
 		return -1
 	}
