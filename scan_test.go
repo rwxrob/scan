@@ -12,16 +12,17 @@ import (
 func ExampleR_init() {
 
 	// * extremely minimal initialization
-	// * no need for pointer
 	// * order guaranteed never to change
 
-	s := scan.R{B: []byte(`some thing`)}
+	s := new(scan.R)
+	s.B = []byte(`some thing`)
 	fmt.Println(s)
 
 }
 
 func ExampleR_Scan() {
-	s := scan.R{B: []byte(`foo`)}
+	s := new(scan.R)
+	s.B = []byte(`foo`)
 
 	s.Print() // equivalent of a "zero value"
 
@@ -48,7 +49,8 @@ func ExampleR_Scan() {
 }
 
 func ExampleR_Scan_loop() {
-	s := scan.R{B: []byte(`abcdefgh`)}
+	s := new(scan.R)
+	s.B = []byte(`abcdefgh`)
 	for s.Scan() {
 		fmt.Print(string(s.R))
 		if s.P != len(s.B) {
@@ -60,7 +62,8 @@ func ExampleR_Scan_loop() {
 }
 
 func ExampleR_Scan_jump() {
-	s := scan.R{B: []byte(`foo1234`)}
+	s := new(scan.R)
+	s.B = []byte(`foo1234`)
 
 	fmt.Println(s.Scan())
 	s.Print()
@@ -77,7 +80,8 @@ func ExampleR_Scan_jump() {
 }
 
 func ExampleR_Is() {
-	s := scan.R{B: []byte(`foo`)}
+	s := new(scan.R)
+	s.B = []byte(`foo`)
 
 	s.Scan() // never forget to scan with Is (use Peek otherwise)
 
@@ -89,8 +93,25 @@ func ExampleR_Is() {
 	// false
 }
 
+func ExampleR_Peek() {
+
+	s := new(scan.R)
+	s.B = []byte(`foo`)
+
+	fmt.Println(s.Peek("fo"))
+	s.Scan()
+	fmt.Println(s.Peek("fo"))
+	fmt.Println(s.Peek("oo"))
+
+	// Output:
+	// true
+	// false
+	// true
+}
+
 func ExampleR_Is_not() {
-	s := scan.R{B: []byte("\r\n")}
+	s := new(scan.R)
+	s.B = []byte("\r\n")
 
 	s.Scan() // never forget to scan with Is (use Peek otherwise)
 
@@ -106,7 +127,8 @@ func ExampleR_Is_not() {
 }
 
 func ExampleR_Match() {
-	s := scan.R{B: []byte(`foo`)}
+	s := new(scan.R)
+	s.B = []byte(`foo`)
 
 	s.Scan() // never forget to scan (use PeekMatch otherwise)
 
@@ -125,7 +147,8 @@ func ExampleR_Match() {
 }
 
 func ExampleR_Pos() {
-	s := scan.R{B: []byte("one line\nand another\r\nand yet another")}
+	s := new(scan.R)
+	s.B = []byte("one line\nand another\r\nand yet another")
 
 	s.P = 2
 	s.Pos().Print()
@@ -150,7 +173,8 @@ func ExampleR_Pos() {
 }
 
 func ExampleR_Positions() {
-	s := scan.R{B: []byte("one line\nand another\r\nand yet another")}
+	s := new(scan.R)
+	s.B = []byte("one line\nand another\r\nand yet another")
 
 	for _, p := range s.Positions(2, 12, 27) {
 		p.Print()
@@ -169,7 +193,8 @@ func ExampleR_Report() {
 	log.SetOutput(os.Stdout)
 	log.SetFlags(0)
 
-	s := scan.R{B: []byte("one line\nand another\r\nand yet another")}
+	s := new(scan.R)
+	s.B = []byte("one line\nand another\r\nand yet another")
 
 	s.Scan()
 	s.Report()
