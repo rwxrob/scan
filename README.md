@@ -11,15 +11,27 @@ Card](https://goreportcard.com/badge/github.com/rwxrob/scan)](https://goreportca
 
 ## Design Considerations
 
-* **Just a buffer, position, and last rune scanned.**
+**Breaking change between v0.10 and v0.11**
 
-  There's no need to complicate things for this scanner. This has the
-  unexpected benefit of making this scanner something that can be
-  marshaled in its current state.
+After adding `pegn.Scanner` interface implementation went ahead and
+changed `scan.LP` to `scan.PP` (for previous instead of last).
+
+**Fulfills pegn.Scanner interface**
+
+The `pegn.Scanner` interface has become authoritative for this (and
+most) PEGN parsers I develop since it can allow the required
+abstractions when necessary without getting in the way of performant
+parsing when needed.
+
+**Just a buffer, position, and last rune scanned**
+
+There's no need to complicate things for this scanner. This has the
+unexpected benefit of making this scanner something that can be
+marshaled in its current state.
 
 * **Promote easy initialization.**
 
-  Using `s := scan.R{Buf: []byte("foo")}` is a perfect good way to
+  Using `s := scan.R{B: []byte("foo")}` is a perfect good way to
   initialize this bare-bones scanner and should be promoted in order to
   keep the scope of this scanner very low-level and performant.
 
