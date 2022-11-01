@@ -227,6 +227,9 @@ func (s *R) Peek(a string) bool {
 	return false
 }
 
+// End returns true if scanner has nothing more to scan.
+func (s *R) End() bool { return s.P == len(s.B) }
+
 // Is returns true if the passed string matches the last scanned rune
 // and the runes ahead matching the length of the string.  Returns false
 // if the string would go beyond the length of buffer (len(s.B)).

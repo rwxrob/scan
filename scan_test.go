@@ -211,3 +211,26 @@ func ExampleR_Report() {
 	// error: sample error at U+0061 'a' 2,5-5 (14-14)
 
 }
+
+func ExampleR_End() {
+	s := new(scan.R)
+	s.B = []byte("foo")
+	s.Print()
+	s.Scan()
+	s.Print()
+	fmt.Println(s.End())
+	s.Scan()
+	s.Print()
+	fmt.Println(s.End())
+	s.Scan()
+	s.Print()
+	fmt.Println(s.End())
+	// Output:
+	// 0 '\x00' "foo"
+	// 1 'f' "oo"
+	// false
+	// 2 'o' "o"
+	// false
+	// 3 'o' ""
+	// true
+}
