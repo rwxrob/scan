@@ -11,6 +11,7 @@ package scan
 import (
 	"bytes"
 	"fmt"
+	"io"
 	"log"
 	"regexp"
 	"text/template"
@@ -31,16 +32,49 @@ var DefaultErrorMessage = `failed to scan`
 // rune-centric, scanner with regular expression support. Keep in mind
 // that if and when you change the position (P) directly that rune (R) will not
 // itself be updated as it is only updated by calling Scan. Often an
-// update to the rune (R) as well would be inconsequential, even wasteful.
+// update to the rune (R) as well would be inconsequential, even
+// wasteful.  When less performant scanner operations are okay and or
+// a higher level of abstraction allowed consider using the pegn.Scanner
+// interface methods instead.
 type R struct {
 	B        []byte             // full buffer for lookahead or behind
 	P        int                // index in B slice, points *after* R
-	LP       int                // index before last Scan
+	PP       int                // index of previous Scan, points *to* R
 	R        rune               // last decoded, Scan updates, >1byte
 	Trace    int                // activate trace log (>0)
 	Errors   []error            // stack of errors in order
 	Template *template.Template // for Report()
 	NewLine  []string           // []string{"\r\n","\n"} by default
+}
+
+func (s *R) Bytes() []byte       { return s.B }
+func (s *R) SetBytes(buf []byte) { s.B = buf }
+func (s *R) Rune() rune          { return s.R }
+func (s *R) SetRune(r rune)      { s.R = r }
+func (s *R) Cur() int            { return s.P }
+func (s *R) SetCur(p int)        { s.P = p }
+func (s *R) Prev() int           { return s.PP }
+func (s *R) SetPrev(p int)       { s.PP = p }
+
+// Buffer sets the internal bytes buffer and initializes all internal
+// pointers and state. This is useful when testing in order to buffer
+// strings as well as content from any io.Reader.
+func (s *R) Buffer(b any) {
+	switch v := b.(type) {
+	case string:
+		s.B = []byte(v)
+	case []byte:
+		s.B = v
+	case io.Reader:
+		b, err := io.ReadAll(v)
+		if err != nil {
+			log.Printf("unable to read: %v", err)
+			return
+		}
+		s.B = b
+	}
+	s.P = 0
+	s.PP = 0
 }
 
 const DefaultTemplate = `
@@ -203,7 +237,7 @@ func (s *R) Scan() bool {
 		}
 	}
 
-	s.LP = s.P
+	s.PP = s.P
 	s.P += ln
 	s.R = r
 
@@ -230,15 +264,24 @@ func (s *R) Peek(a string) bool {
 // End returns true if scanner has nothing more to scan.
 func (s *R) End() bool { return s.P == len(s.B) }
 
+// Mark returns the main state values in order to jump Back() when
+// required during other scan operations. Mark fulfills the pegn.Scanner
+// interface.
+func (s *R) Mark() (rune, int, int) { return s.R, s.P, s.PP }
+
+// Back restores the main state of the scanner and fulfills the
+// pegn.Scanner interface.
+func (s *R) Back(r rune, p int, lp int) { s.R, s.P, s.PP = r, p, lp }
+
 // Is returns true if the passed string matches the last scanned rune
 // and the runes ahead matching the length of the string.  Returns false
 // if the string would go beyond the length of buffer (len(s.B)).
 func (s *R) Is(a string) bool {
-	if len(a)+s.LP > len(s.B) {
+	if len(a)+s.PP > len(s.B) {
 		return false
 	}
 
-	if string(s.B[s.LP:s.LP+len(a)]) == a {
+	if string(s.B[s.PP:s.PP+len(a)]) == a {
 		return true
 	}
 	return false
@@ -263,14 +306,14 @@ func (s *R) PeekMatch(re *regexp.Regexp) int {
 }
 
 // Match checks for a regular expression match at the last position in
-// the buffer (s.LP) providing a mechanism for positive and negative
+// the buffer (s.PP) providing a mechanism for positive and negative
 // lookahead expressions. It returns the length of the match.
 // Successful matches might be zero (see regexp.Regexp.FindIndex).
 // A negative value is returned if no match is found.  Note that Go
 // regular expressions now include the Unicode character classes (ex:
 // \p{L}) that should be used over dated alternatives (ex: \w).
 func (s *R) Match(re *regexp.Regexp) int {
-	loc := re.FindIndex(s.B[s.LP:])
+	loc := re.FindIndex(s.B[s.PP:])
 	if loc == nil {
 		return -1
 	}
