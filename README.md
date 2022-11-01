@@ -1,5 +1,8 @@
 # Basic Go Rune Scanner
 
+**💥 DEPRECATED. Moved to
+[rwxrob/pegn](https://github.com/rwxrob/pegn).**
+
 [![GoDoc](https://godoc.org/github.com/rwxrob/scan?status.svg)](https://godoc.org/github.com/rwxrob/scan)
 [![License](https://img.shields.io/badge/license-Apache2-brightgreen.svg)](LICENSE)
 [![Go Report
@@ -10,6 +13,11 @@ Card](https://goreportcard.com/badge/github.com/rwxrob/scan)](https://goreportca
 * Intuitive
 
 ## Design Considerations
+
+**Moved to github.com/rwxrob/pegn/scan**
+
+This scanner is heavily influenced by PEG and expectations about use of
+memory and such are better set by moving it into a PEG-related package.
 
 **Breaking change between v0.10 and v0.11**
 
