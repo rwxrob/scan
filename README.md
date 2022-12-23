@@ -5,13 +5,9 @@
 [![Go Report
 Card](https://goreportcard.com/badge/github.com/rwxrob/scan)](https://goreportcard.com/report/github.com/rwxrob/scan)
 
-This scanner is meant either to be used as-is or "vendored" and included in other projects to remove any fragile dependencies on what is usually a core software component of project that require such a scanner.
+This "scanner" is a simple demonstration of how casting a `[]byte` slice to the `[]rune` slice is all that is effectively needed for creating recursive descent parsers.
 
-* Fast
-* Simple
-* Intuitive
-
-***Version v0.2 is a significant breaking change*** since it changes all the methods and the underlying buffer to be `[]rune` instead of `[]byte`.
+***Version v0.2 is a significant breaking change*** since it completely drops all the unnecessary complexity of what should have always just been a `[]rune` slice. 
 
 ***Breaking change between v0.10 and v0.11***
 
